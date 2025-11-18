@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 
 export default function Home() {
@@ -9,7 +10,7 @@ export default function Home() {
             Project Management
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Turn chaos into clarity. 
+            Turn chaos into clarity.
           </p>
           /*<div className="flex gap-4 justify-center">
             <Link
