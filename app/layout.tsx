@@ -50,7 +50,7 @@ export default function RootLayout({
           }}
         />
         <ThemeProvider>
-          <Navbar />
+          
           <StackProvider app={stackClientApp}>
             <StackTheme>
               {children}

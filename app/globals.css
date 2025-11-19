@@ -2,6 +2,12 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+:root {
+  --navbar-height: 72px;
+}
+
 body {
   font-family: Arial, Helvetica, sans-serif;
 }
+
+

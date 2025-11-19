@@ -3,22 +3,24 @@
 import { BarChart3, Link } from "lucide-react";
 import ThemeToggle from "./theme-toggle";
 
-export default function Navbar({ currentPath = "/dashboard",
-}: {
-    currentPath: string;
-}) {
-    const navigation = [
-        { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
-        
-    ];
+export const NAVBAR_HEIGHT = 72; // 4.5rem in pixels - matches CSS variable
+
+export default function Navbar({ currentPath = "/dashboard" }: { currentPath?: string }) {
     return (
-        <nav className="fixed top-0 left-0 w-full z-50 bg-gradient-to-br from-gray-200 to-gray-400 dark:from-gray-900 dark:to-gray-800 shadow-md flex justify-between items-center px-6 py-2 h-18">
-            <div className="flex gap-4 items-center justify-start text-xl font-semibold text-gray-900 dark:text-gray-100">
-                Navbar
+        <nav 
+            className="fixed top-0 left-0 w-full z-50 bg-gradient-to-br from-gray-200 to-gray-400 dark:from-gray-900 dark:to-gray-800 shadow-md flex items-center px-6 py-2"
+            style={{ height: 'var(--navbar-height)' }}
+        >
+
+            {/* Absolutely centered title */}
+            <div className="absolute left-1/2 -translate-x-1/2 text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                Project Manager
             </div>
-            <div className="flex items-center gap-2 pr-4">
+
+            {/* Right side */}
+            <div className="ml-auto flex items-center gap-2 pr-4">
                 <ThemeToggle />
             </div>
         </nav>
-    )
+    );
 }
