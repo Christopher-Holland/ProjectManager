@@ -1,12 +1,22 @@
-import { defineConfig, env } from "prisma/config";
+import { defineConfig } from "prisma/config";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { Pool } from "@neondatabase/serverless";
+import { config } from "dotenv";
+
+config();
+
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  throw new Error("DATABASE_URL environment variable is not set");
+}
+
+const pool = new Pool({ connectionString: databaseUrl });
+const adapter = new PrismaNeon(pool);
 
 export default defineConfig({
-  schema: "prisma/schema.prisma",
-  migrations: {
-    path: "prisma/migrations",
-  },
-  engine: "classic",
   datasource: {
-    url: env("DATABASE_URL"),
+    url: databaseUrl,
   },
+  adapter,
 });
+

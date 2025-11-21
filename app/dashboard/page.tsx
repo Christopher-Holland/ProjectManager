@@ -4,6 +4,7 @@ import { useState } from "react";
 import ToggleSegment from "../components/ToggleSegment";
 import Navbar from "../components/navbar";
 import PageContent from "../components/page-content";
+import ProjectsList from "../components/projects-list";
 
 export default function Dashboard() {
     const [view, setView] = useState("tasks");
@@ -18,17 +19,14 @@ export default function Dashboard() {
 
 
                 <div className="mt-8">
-                    {view === "tasks" && <div>Tasks content</div>}
-                    {view === "goals" && <div>Goals content</div>}
-                    {view === "timeline" && <div>Timeline content</div>}
-                </div>
-                <div class="grid grid-cols-3 gap-4">
-                    <div class="bg-blue-200 p-4">Column 1</div>
-                    <div class="bg-green-200 p-4">Column 2</div>
-                    <div class="bg-red-200 p-4">Column 3</div>
-                    <div class="bg-yellow-200 p-4">Column 4</div>
-                    <div class="bg-purple-200 p-4">Column 5</div>
-                    <div class="bg-orange-200 p-4">Column 6</div>
+                    {view === "tasks" && (
+                        <div>
+                            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Projects</h2>
+                            <ProjectsList />
+                        </div>
+                    )}
+                    {view === "goals" && <div className="text-gray-900 dark:text-gray-100">Goals content</div>}
+                    {view === "timeline" && <div className="text-gray-900 dark:text-gray-100">Timeline content</div>}
                 </div>
             </PageContent>
         </>
