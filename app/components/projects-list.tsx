@@ -67,6 +67,12 @@ export default function ProjectsList() {
     }
   };
 
+  const handleEdit = (id: string) => {
+    // TODO: Implement edit functionality
+    console.log("Edit project:", id);
+    // This could open a modal, navigate to an edit page, or trigger an edit form
+  };
+
   if (loading) {
     return <div className="text-gray-600 dark:text-gray-400">Loading projects...</div>;
   }
@@ -98,6 +104,7 @@ export default function ProjectsList() {
               status={project.status}
               onStatusChange={handleStatusChange}
               onDelete={handleDelete}
+              onEdit={handleEdit}
             />
           ))
         )}

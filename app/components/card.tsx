@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Calendar, Trash2, ChevronDown } from "lucide-react";
+import { Calendar, Trash2, ChevronDown, Pencil } from "lucide-react";
 
 interface CardProps {
     id: string;
@@ -13,6 +13,7 @@ interface CardProps {
     release?: string | null;
     onStatusChange?: (id: string, newStatus: string) => void;
     onDelete?: (id: string) => void;
+    onEdit?: (id: string) => void;
 }
 
 export default function Card({
@@ -25,6 +26,7 @@ export default function Card({
     release,
     onStatusChange,
     onDelete,
+    onEdit,
 }: CardProps) {
 
     // ----- Calculate days remaining -----
@@ -70,23 +72,41 @@ export default function Card({
         }
     };
 
+    const handleEdit = () => {
+        if (onEdit) {
+            onEdit(id);
+        }
+    };
+
     return (
         <div className="p-5 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-900 space-y-3">
 
-            {/* ---------- Line 1: Title + Delete ---------- */}
+            {/* ---------- Line 1: Title + Edit + Delete ---------- */}
             <div className="flex items-start justify-between">
                 <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 pr-2">
                     {title}
                 </h2>
 
-                {onDelete && (
-                    <button
-                        onClick={handleDelete}
-                        className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                    >
-                        <Trash2 size={18} />
-                    </button>
-                )}
+                <div className="flex items-center gap-2">
+                    {onEdit && (
+                        <button
+                            onClick={handleEdit}
+                            className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                            aria-label="Edit project"
+                        >
+                            <Pencil size={18} />
+                        </button>
+                    )}
+                    {onDelete && (
+                        <button
+                            onClick={handleDelete}
+                            className="text-blue-500 hover:text-red-500 dark:text-blue-400 dark:hover:text-red-500 transition-colors"
+                            aria-label="Delete project"
+                        >
+                            <Trash2 size={18} />
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* ---------- Line 2: Description ---------- */}

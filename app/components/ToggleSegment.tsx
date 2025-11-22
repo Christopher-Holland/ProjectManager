@@ -31,8 +31,8 @@ export default function ToggleSegment({ onChange }: ToggleSegmentProps) {
           flex 
           bg-gray-200 dark:bg-gray-700
           rounded-full 
-          p-3 
-          gap-3
+          p-1.5 
+          gap-1.5
           w-fit
         "
             >
@@ -41,15 +41,15 @@ export default function ToggleSegment({ onChange }: ToggleSegmentProps) {
                     layout
                     className="
             absolute 
-            top-3 
-            bottom-3 
+            top-1.5 
+            bottom-1.5 
             rounded-full 
             bg-white dark:bg-gray-900 
             shadow-md
           "
                     style={{
-                        left: `${options.findIndex(o => o.key === selected) * 162 + 12}px`,
-                        width: "150px",
+                        left: `${options.findIndex(o => o.key === selected) * 81 + 6}px`,
+                        width: "75px",
                     }}
                     transition={{ type: "spring", bounce: 0.25, duration: 0.45 }}
                 />
@@ -64,16 +64,16 @@ export default function ToggleSegment({ onChange }: ToggleSegmentProps) {
                             key={opt.key}
                             onClick={() => handleClick(opt.key)}
                             className={cn(
-                                "relative z-10 flex items-center justify-center gap-2",
-                                "px-6 py-3 rounded-full",
-                                "text-base font-medium transition-colors text-lg",
+                                "relative z-10 flex items-center justify-center gap-1",
+                                "px-3 py-1.5 rounded-full",
+                                "text-base font-medium transition-colors text-sm",
                                 isActive
                                     ? "text-black dark:text-white"
                                     : "text-gray-600 dark:text-gray-300"
                             )}
-                            style={{ width: 150 }}
+                            style={{ width: 75 }}
                         >
-                            <Icon className="size-6 " />
+                            <Icon className="size-3 " />
                             {opt.label}
                         </button>
                     );
