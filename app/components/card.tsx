@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Calendar, Trash2, ChevronDown, Pencil } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Calendar, Trash2, ChevronDown, Pencil, Eye } from "lucide-react";
+import EditModal from "./edit-modal";
+import TaskModal from "./tasks-modal";
 
 interface CardProps {
     id: string;
@@ -14,6 +16,14 @@ interface CardProps {
     onStatusChange?: (id: string, newStatus: string) => void;
     onDelete?: (id: string) => void;
     onEdit?: (id: string) => void;
+    onUpdate?: (id: string, data: {
+        title: string;
+        description: string;
+        dueDate?: string;
+        priority: number;
+        status: string;
+        release?: string;
+    }) => Promise<void>;
 }
 
 export default function Card({
@@ -27,6 +37,7 @@ export default function Card({
     onStatusChange,
     onDelete,
     onEdit,
+    onUpdate,
 }: CardProps) {
 
     // ----- Calculate days remaining -----
@@ -59,6 +70,50 @@ export default function Card({
 
     // ----- Local Status State -----
     const [localStatus, setLocalStatus] = useState(status);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isTasksModalOpen, setIsTasksModalOpen] = useState(false);
+    const [completionPercentage, setCompletionPercentage] = useState<number | null>(null);
+
+    // Update local status when prop changes
+    useEffect(() => {
+        setLocalStatus(status);
+    }, [status]);
+
+    // Fetch tasks and calculate completion percentage
+    useEffect(() => {
+        async function fetchTasksAndCalculatePercentage() {
+            try {
+                const response = await fetch(`/api/projects/${id}/tasks`);
+                if (response.ok) {
+                    const tasks = await response.json();
+
+                    // Calculate overall completion
+                    let totalItems = 0;
+                    let completedItems = 0;
+
+                    tasks.forEach((task: { completed: boolean; subtasks?: { completed: boolean }[] }) => {
+                        totalItems += 1; // Count the task itself
+                        if (task.completed) completedItems += 1;
+
+                        if (task.subtasks) {
+                            task.subtasks.forEach((subtask: { completed: boolean }) => {
+                                totalItems += 1; // Count each subtask
+                                if (subtask.completed) completedItems += 1;
+                            });
+                        }
+                    });
+
+                    const percentage = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+                    setCompletionPercentage(percentage);
+                }
+            } catch (error) {
+                console.error("Error fetching tasks for percentage:", error);
+                setCompletionPercentage(null);
+            }
+        }
+
+        fetchTasksAndCalculatePercentage();
+    }, [id, isTasksModalOpen]); // Re-fetch when modal closes to update percentage
 
     const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newStatus = e.target.value;
@@ -73,13 +128,30 @@ export default function Card({
     };
 
     const handleEdit = () => {
-        if (onEdit) {
-            onEdit(id);
+        onEdit && onEdit(id);
+        setIsEditModalOpen(true);
+    };
+
+    const handleSave = async (data: {
+        title: string;
+        description: string;
+        dueDate?: string;
+        priority: number;
+        status: string;
+        release?: string;
+    }) => {
+        if (onUpdate) {
+            await onUpdate(id, data);
         }
+        setIsEditModalOpen(false);
+    };
+
+    const handleCloseModal = () => {
+        setIsEditModalOpen(false);
     };
 
     return (
-        <div className="p-5 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-900 space-y-3">
+        <div className="p-5 rounded-lg border border-gray-400 dark:border-gray-700 shadow-md bg-gray-200 dark:bg-gray-900 space-y-3">
 
             {/* ---------- Line 1: Title + Edit + Delete ---------- */}
             <div className="flex items-start justify-between">
@@ -124,44 +196,89 @@ export default function Card({
                 </div>
             )}
 
-            {/* ---------- Line 4: Priority + Release ---------- */}
+            {/* ---------- Line 4: Priority + Release + Percentage ---------- */}
             <div className="flex items-center gap-2">
-                <span
-                    className={`text-xs px-2.5 py-1 rounded-full font-medium ${priorityColor}`}
-                >
-                    {priorityLabel}
-                </span>
 
-                {release && (
-                    <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-                        {release}
+                {/* Left side: Priority + Release */}
+                <div className="flex items-center gap-2">
+                    <span
+                        className={`text-xs px-2.5 py-1 rounded-full font-medium ${priorityColor}`}
+                    >
+                        {priorityLabel}
                     </span>
+
+                    {release && (
+                        <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                            {release}
+                        </span>
+                    )}
+                </div>
+
+                {/* Right side: Completion percentage */}
+                {completionPercentage !== null && (
+                    <p className="ml-auto text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        {completionPercentage}%
+                    </p>
                 )}
             </div>
 
-            {/* ---------- Line 5: Status Dropdown ---------- */}
-            <div className="relative w-fit">
-                <select
-                    value={localStatus}
-                    onChange={handleStatusChange}
-                    className="appearance-none text-sm font-medium text-gray-700 dark:text-gray-300 
-                               bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 
-                               rounded-lg px-3 py-1.5 pr-8 cursor-pointer 
-                               hover:bg-gray-200 dark:hover:bg-gray-700 
-                               transition-colors focus:outline-none 
-                               focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                    <option value="active">To Do</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                </select>
+            {/* ---------- Line 5: Status Dropdown + See Tasks Button ---------- */}
+            <div className="flex items-center justify-between">
+                <div className="relative w-fit">
+                    <select
+                        value={localStatus}
+                        onChange={handleStatusChange}
+                        className="appearance-none text-sm font-medium text-gray-700 dark:text-gray-300 
+                                   bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 
+                                   rounded-lg px-3 py-1.5 pr-8 cursor-pointer 
+                                   hover:bg-gray-200 dark:hover:bg-gray-700 
+                                   transition-colors focus:outline-none 
+                                   focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                        <option value="active">To Do</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
 
-                <ChevronDown
-                    size={16}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none 
-                               text-gray-500 dark:text-gray-400"
-                />
+                    <ChevronDown
+                        size={16}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none 
+                                   text-gray-500 dark:text-gray-400"
+                    />
+                </div>
+
+                <div className="flex flex-col items-end gap-1">
+
+                    <button
+                        onClick={() => setIsTasksModalOpen(true)}
+                        className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
+                        <Eye size={16} />
+                        <span>See Tasks</span>
+                    </button>
+                </div>
             </div>
+
+            {/* Edit Modal */}
+            <EditModal
+                isOpen={isEditModalOpen}
+                onClose={handleCloseModal}
+                onSave={handleSave}
+                initialTitle={title}
+                initialDescription={description || ""}
+                initialDueDate={dueDate}
+                initialPriority={priority}
+                initialStatus={status}
+                initialRelease={release}
+            />
+
+            {/* Tasks Modal */}
+            <TaskModal
+                isOpen={isTasksModalOpen}
+                onClose={() => setIsTasksModalOpen(false)}
+                projectId={id}
+                projectTitle={`${title} - Tasks`}
+            />
         </div>
     );
 }

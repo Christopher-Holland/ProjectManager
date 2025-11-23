@@ -68,9 +68,41 @@ export default function ProjectsList() {
   };
 
   const handleEdit = (id: string) => {
-    // TODO: Implement edit functionality
-    console.log("Edit project:", id);
-    // This could open a modal, navigate to an edit page, or trigger an edit form
+    // Edit is handled by the Card component itself
+    // This is called when edit button is clicked but the modal state is managed in Card
+  };
+
+  const handleUpdate = async (id: string, data: { 
+    title: string; 
+    description: string;
+    dueDate?: string;
+    priority: number;
+    status: string;
+    release?: string;
+  }) => {
+    try {
+      const response = await fetch(`/api/projects/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        const updatedProject = await response.json();
+        setProjects((prev) =>
+          prev.map((p) => (p.id === id ? { 
+            ...p, 
+            title: updatedProject.title, 
+            description: updatedProject.description,
+            dueDate: updatedProject.dueDate ? new Date(updatedProject.dueDate) : null,
+            priority: updatedProject.priority,
+            status: updatedProject.status,
+          } : p))
+        );
+      }
+    } catch (error) {
+      console.error("Error updating project:", error);
+    }
   };
 
   if (loading) {
@@ -105,6 +137,7 @@ export default function ProjectsList() {
               onStatusChange={handleStatusChange}
               onDelete={handleDelete}
               onEdit={handleEdit}
+              onUpdate={handleUpdate}
             />
           ))
         )}

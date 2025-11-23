@@ -5,29 +5,90 @@ import ToggleSegment from "../components/ToggleSegment";
 import Navbar from "../components/navbar";
 import PageContent from "../components/page-content";
 import ProjectsList from "../components/projects-list";
+import AddModal from "../components/add-modal";
+import { Plus } from "lucide-react";
 
 export default function Dashboard() {
-    const [view, setView] = useState("tasks");
+    const [view, setView] = useState("projects");
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0);
+
+    const handleAddProject = async (data: {
+        title: string;
+        description: string;
+        dueDate?: string;
+        priority: number;
+        status: string;
+        release?: string;
+    }) => {
+        try {
+            const response = await fetch("/api/projects", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+                setIsAddModalOpen(false);
+                // Trigger refresh of ProjectsList
+                setRefreshKey((prev) => prev + 1);
+            } else {
+                const errorData = await response.json();
+                console.error("Failed to create project:", errorData);
+                alert(`Failed to create project: ${errorData.error || "Unknown error"}`);
+            }
+        } catch (error) {
+            console.error("Error creating project:", error);
+            alert(`Error creating project: ${error instanceof Error ? error.message : "Unknown error"}`);
+        }
+    };
+
     return (
         <>
             <Navbar />
-            <PageContent className="p-6">
+            <PageContent className="p-6 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 p-4 text-3xl">Dashboard</h1>
+                    <div className="flex items-center justify-between w-full mb-6">
+                        <ToggleSegment onChange={setView} />
+
+                        <button
+                            onClick={() => setIsAddModalOpen(true)}
+                            className="
+                            flex items-center gap-2
+                            bg-gray-900 text-white
+                            hover:bg-gray-700
+                            dark:bg-blue-700 dark:hover:bg-blue-500
+                            px-4 py-2 rounded-xl
+                            shadow-sm transition-colors
+                        "
+                            aria-label="Add project"
+                        >
+                            <Plus size={18} />
+                            Add Project
+                        </button>
+                    </div>
                 </div>
-                <ToggleSegment onChange={setView} />
+
 
 
                 <div className="mt-8">
-                    {view === "tasks" && (
+                    {view === "projects" && (
                         <div>
                             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Projects</h2>
-                            <ProjectsList />
+                            <ProjectsList key={refreshKey} />
                         </div>
                     )}
                     {view === "goals" && <div className="text-gray-900 dark:text-gray-100">Goals content</div>}
                     {view === "timeline" && <div className="text-gray-900 dark:text-gray-100">Timeline content</div>}
+                    {view === "notes" && <div className="text-gray-900 dark:text-gray-100">Notes content</div>}
                 </div>
+
+                <AddModal
+                    isOpen={isAddModalOpen}
+                    onClose={() => setIsAddModalOpen(false)}
+                    onSave={handleAddProject}
+                />
             </PageContent>
         </>
     )

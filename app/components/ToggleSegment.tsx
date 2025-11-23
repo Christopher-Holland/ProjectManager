@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { ListChecks, Target, Calendar } from "lucide-react";
+import { ListChecks, Target, Calendar, NotebookPen } from "lucide-react";
 
 const options = [
-    { key: "tasks", label: "Tasks", icon: ListChecks },
+    { key: "projects", label: "Projects", icon: ListChecks },
     { key: "goals", label: "Goals", icon: Target },
     { key: "timeline", label: "Timeline", icon: Calendar },
+    { key: "notes", label: "Notes", icon: NotebookPen },
 ];
 
 interface ToggleSegmentProps {
@@ -16,12 +17,38 @@ interface ToggleSegmentProps {
 }
 
 export default function ToggleSegment({ onChange }: ToggleSegmentProps) {
-    const [selected, setSelected] = useState("tasks");
+    const [selected, setSelected] = useState("projects");
+    const [highlightStyle, setHighlightStyle] = useState({ left: 0, width: 0 });
+    const buttonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
 
     const handleClick = (key: string) => {
         setSelected(key);
         onChange?.(key);
     };
+
+    useEffect(() => {
+        const updateHighlight = () => {
+            const activeButton = buttonRefs.current[selected];
+            if (activeButton) {
+                const container = activeButton.parentElement;
+                if (container) {
+                    const containerRect = container.getBoundingClientRect();
+                    const buttonRect = activeButton.getBoundingClientRect();
+                    setHighlightStyle({
+                        left: buttonRect.left - containerRect.left,
+                        width: buttonRect.width,
+                    });
+                }
+            }
+        };
+
+        // Update on mount and when selected changes
+        updateHighlight();
+
+        // Update on window resize
+        window.addEventListener("resize", updateHighlight);
+        return () => window.removeEventListener("resize", updateHighlight);
+    }, [selected]);
 
     return (
         <div className="flex items-start">
@@ -38,7 +65,6 @@ export default function ToggleSegment({ onChange }: ToggleSegmentProps) {
             >
                 {/* Sliding highlight */}
                 <motion.div
-                    layout
                     className="
             absolute 
             top-1.5 
@@ -48,8 +74,8 @@ export default function ToggleSegment({ onChange }: ToggleSegmentProps) {
             shadow-md
           "
                     style={{
-                        left: `${options.findIndex(o => o.key === selected) * 81 + 6}px`,
-                        width: "75px",
+                        left: highlightStyle.left,
+                        width: highlightStyle.width,
                     }}
                     transition={{ type: "spring", bounce: 0.25, duration: 0.45 }}
                 />
@@ -62,6 +88,9 @@ export default function ToggleSegment({ onChange }: ToggleSegmentProps) {
                     return (
                         <button
                             key={opt.key}
+                            ref={(el) => {
+                                buttonRefs.current[opt.key] = el;
+                            }}
                             onClick={() => handleClick(opt.key)}
                             className={cn(
                                 "relative z-10 flex items-center justify-center gap-1",
@@ -71,10 +100,9 @@ export default function ToggleSegment({ onChange }: ToggleSegmentProps) {
                                     ? "text-black dark:text-white"
                                     : "text-gray-600 dark:text-gray-300"
                             )}
-                            style={{ width: 75 }}
                         >
-                            <Icon className="size-3 " />
-                            {opt.label}
+                            {Icon && <Icon className="w-4 h-4 flex-shrink-0" />}
+                            <span className="whitespace-nowrap">{opt.label}</span>
                         </button>
                     );
                 })}

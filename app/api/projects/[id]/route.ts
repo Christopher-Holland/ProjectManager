@@ -8,11 +8,28 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { status } = body;
+    const { status, title, description, priority, dueDate, release } = body;
+
+    const updateData: { 
+      status?: string; 
+      title?: string; 
+      description?: string | null;
+      priority?: number;
+      dueDate?: Date | null;
+    } = {};
+    
+    if (status !== undefined) updateData.status = status;
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description || null;
+    if (priority !== undefined) updateData.priority = priority;
+    if (dueDate !== undefined) {
+      updateData.dueDate = dueDate ? new Date(dueDate) : null;
+    }
+    // Note: release field is not in the database schema, so it's not updated here
 
     const updatedProject = await prisma.project.update({
       where: { id },
-      data: { status },
+      data: updateData,
     });
 
     return NextResponse.json(updatedProject);
