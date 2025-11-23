@@ -129,6 +129,18 @@ export default function TaskModal({
     };
 
     const completionPercentage = calculateCompletionPercentage();
+
+    // Get color class for completion percentage
+    const getPercentageColor = (percentage: number) => {
+        if (percentage < 50) {
+            return "text-red-600 dark:text-red-400"; // Low completion - red
+        } else if (percentage < 80) {
+            return "text-blue-600 dark:text-blue-400"; // Medium completion - blue
+        } else {
+            return "text-green-600 dark:text-green-400"; // High completion - green
+        }
+    };
+
     // close on escape
     useEffect(() => {
         if (!isOpen) return;
@@ -160,7 +172,7 @@ export default function TaskModal({
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                         {projectTitle}
                     </h3>
-                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <p className={`text-sm font-semibold ${getPercentageColor(completionPercentage)}`}>
                         {completionPercentage}%
                     </p>
                 </header>

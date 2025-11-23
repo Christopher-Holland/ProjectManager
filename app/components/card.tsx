@@ -68,6 +68,17 @@ export default function Card({
         3: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
     }[priority];
 
+    // Get color class for completion percentage
+    const getPercentageColor = (percentage: number) => {
+        if (percentage < 50) {
+            return "text-red-600 dark:text-red-400"; // Low completion - red
+        } else if (percentage < 80) {
+            return "text-blue-600 dark:text-blue-400"; // Medium completion - blue
+        } else {
+            return "text-green-600 dark:text-green-400"; // High completion - green
+        }
+    };
+
     // ----- Local Status State -----
     const [localStatus, setLocalStatus] = useState(status);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -216,7 +227,7 @@ export default function Card({
 
                 {/* Right side: Completion percentage */}
                 {completionPercentage !== null && (
-                    <p className="ml-auto text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <p className={`ml-auto text-sm font-semibold ${getPercentageColor(completionPercentage)}`}>
                         {completionPercentage}%
                     </p>
                 )}
