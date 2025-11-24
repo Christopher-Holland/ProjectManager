@@ -165,14 +165,22 @@ export default function TaskModal({
                 }
             } else {
                 // Create new task
-                const response = await fetch(`/api/projects/${projectId}/tasks`, {
+                const createPayload = {
+                    title: data.title,
+                    description: data.description,
+                };
+                console.log(`Creating new task for project ${projectId} with payload:`, createPayload);
+                
+                const url = `/api/projects/${projectId}/tasks`;
+                console.log(`Making POST request to: ${url}`);
+                
+                const response = await fetch(url, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        title: data.title,
-                        description: data.description,
-                    }),
+                    body: JSON.stringify(createPayload),
                 });
+                
+                console.log("Create task response status:", response.status, response.statusText);
 
                 if (response.ok) {
                     const newTask = await response.json();
@@ -180,32 +188,45 @@ export default function TaskModal({
                     setTasks((prev) => [...prev, newTask]);
                 } else {
                     let errorMessage = "Unknown error";
+                    let errorDetails: any = null;
                     try {
-                        const errorData = await response.json();
-                        errorMessage = errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`;
-                        console.error("Failed to create task:", errorData);
+                        const responseText = await response.text();
+                        console.error("Failed to create task - Response text:", responseText);
+                        try {
+                            errorDetails = JSON.parse(responseText);
+                            errorMessage = errorDetails.error || errorDetails.message || `HTTP ${response.status}: ${response.statusText}`;
+                            console.error("Failed to create task - Parsed error:", errorDetails);
+                        } catch (parseError) {
+                            errorMessage = responseText || `HTTP ${response.status}: ${response.statusText}`;
+                            console.error("Failed to create task - Non-JSON response:", responseText);
+                        }
                     } catch (e) {
                         errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-                        console.error("Failed to create task - non-JSON error:", response.status, response.statusText);
+                        console.error("Failed to create task - Error reading response:", e);
                     }
                     alert(`Failed to create task: ${errorMessage}`);
                     return;
                 }
             }
 
-            // Handle subtasks
+            // Handle subtasks - process ALL subtasks including deletions
             if (data.subtasks && data.subtasks.length > 0) {
                 const subtaskPromises = data.subtasks.map(async (subtask) => {
                     if (subtask.action === 'delete' && subtask.id) {
                         // Delete subtask
                         try {
-                            await fetch(`/api/subtasks/${subtask.id}`, {
+                            const deleteResponse = await fetch(`/api/subtasks/${subtask.id}`, {
                                 method: "DELETE",
                             });
+                            if (!deleteResponse.ok) {
+                                console.error("Failed to delete subtask:", subtask.id);
+                            } else {
+                                console.log("Successfully deleted subtask:", subtask.id);
+                            }
                         } catch (error) {
                             console.error("Error deleting subtask:", error);
                         }
-                    } else if (subtask.action === 'create' || !subtask.id) {
+                    } else if (subtask.action === 'create' || (!subtask.id && subtask.action !== 'delete')) {
                         // Create new subtask
                         try {
                             const response = await fetch(`/api/tasks/${savedTaskId}/subtasks`, {
@@ -245,11 +266,23 @@ export default function TaskModal({
                 await Promise.all(subtaskPromises);
             }
 
-            // Refresh tasks to get updated subtasks
+            // Refresh tasks to get updated subtasks (including deletions)
+            console.log("Refreshing tasks list after save...");
             const refreshResponse = await fetch(`/api/projects/${projectId}/tasks`);
             if (refreshResponse.ok) {
                 const refreshedTasks = await refreshResponse.json();
+                console.log("Refreshed tasks:", refreshedTasks);
                 setTasks(refreshedTasks);
+                
+                // Update editingTask if it was the one being edited, so it has the latest data
+                if (data.taskId && editingTask) {
+                    const updatedTask = refreshedTasks.find((t: Task) => t.id === data.taskId);
+                    if (updatedTask) {
+                        setEditingTask(updatedTask);
+                    }
+                }
+            } else {
+                console.error("Failed to refresh tasks after save");
             }
 
             setIsTaskModalOpen(false);
@@ -260,8 +293,29 @@ export default function TaskModal({
         }
     };
 
-    const handleEditTask = (task: Task) => {
-        setEditingTask(task);
+    const handleEditTask = async (task: Task) => {
+        // Fetch the latest task data to ensure we have the most up-to-date subtasks
+        try {
+            const response = await fetch(`/api/projects/${projectId}/tasks`);
+            if (response.ok) {
+                const refreshedTasks = await response.json();
+                const updatedTask = refreshedTasks.find((t: Task) => t.id === task.id);
+                if (updatedTask) {
+                    setEditingTask(updatedTask);
+                } else {
+                    setEditingTask(task);
+                }
+                // Also update the tasks list to keep it in sync
+                setTasks(refreshedTasks);
+            } else {
+                // Fallback to the task we have if refresh fails
+                setEditingTask(task);
+            }
+        } catch (error) {
+            console.error("Error fetching latest task data:", error);
+            // Fallback to the task we have if fetch fails
+            setEditingTask(task);
+        }
         setIsTaskModalOpen(true);
     };
 

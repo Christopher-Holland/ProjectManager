@@ -86,15 +86,13 @@ export default function TaskModal({
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         
-        // Filter out deleted subtasks and prepare data
-        const subtasksToSave = subtasks
-            .filter(sub => sub.action !== 'delete')
-            .map(sub => ({
-                id: sub.id,
-                title: sub.title,
-                description: sub.description || "",
-                action: sub.action || (sub.id ? 'update' : 'create') as 'create' | 'update',
-            }));
+        // Include ALL subtasks (including deleted ones) so deletions can be processed
+        const subtasksToSave = subtasks.map(sub => ({
+            id: sub.id,
+            title: sub.title,
+            description: sub.description || "",
+            action: sub.action || (sub.id ? 'update' : 'create') as 'create' | 'update' | 'delete',
+        }));
 
         const saveData = {
             title: formData.get("title") as string,
