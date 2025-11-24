@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import type { Task, Subtask } from "@/app/types";
+import { Plus, SquarePen } from "lucide-react";
+import AddTaskModal from "./editTask-modal";
 
 interface TaskModalProps {
     isOpen: boolean;
@@ -19,6 +21,8 @@ export default function TaskModal({
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+    const [editingTask, setEditingTask] = useState<Task | null>(null);
 
     // Fetch tasks when modal opens
     useEffect(() => {
@@ -93,17 +97,195 @@ export default function TaskModal({
         }
     };
 
+    const handleSaveTask = async (data: { 
+        title: string; 
+        description: string; 
+        taskId?: string;
+        subtasks?: Array<{ id?: string; title: string; description?: string; action: 'create' | 'update' | 'delete' }>;
+    }) => {
+        try {
+            console.log("handleSaveTask called with data:", data);
+            let savedTaskId: string;
+
+            if (data.taskId) {
+                // Validate taskId
+                if (!data.taskId || data.taskId.trim() === '') {
+                    console.error("Invalid taskId:", data.taskId);
+                    alert("Failed to update task: Invalid task ID");
+                    return;
+                }
+                
+                // Update existing task
+                const updatePayload = {
+                    title: data.title,
+                    description: data.description,
+                };
+                console.log(`Updating task ${data.taskId} with payload:`, updatePayload);
+                
+                const url = `/api/tasks/${data.taskId}`;
+                console.log(`Making PATCH request to: ${url}`);
+                
+                const response = await fetch(url, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(updatePayload),
+                });
+                
+                console.log("Update task response status:", response.status, response.statusText);
+                console.log("Update task response headers:", Object.fromEntries(response.headers.entries()));
+
+                if (response.ok) {
+                    const updatedTask = await response.json();
+                    savedTaskId = updatedTask.id;
+                    setTasks((prev) =>
+                        prev.map((task) =>
+                            task.id === data.taskId ? updatedTask : task
+                        )
+                    );
+                } else {
+                    let errorMessage = "Unknown error";
+                    let errorDetails: any = null;
+                    try {
+                        const responseText = await response.text();
+                        console.error("Failed to update task - Response text:", responseText);
+                        try {
+                            errorDetails = JSON.parse(responseText);
+                            errorMessage = errorDetails.error || errorDetails.message || `HTTP ${response.status}: ${response.statusText}`;
+                            console.error("Failed to update task - Parsed error:", errorDetails);
+                        } catch (parseError) {
+                            errorMessage = responseText || `HTTP ${response.status}: ${response.statusText}`;
+                            console.error("Failed to update task - Non-JSON response:", responseText);
+                        }
+                    } catch (e) {
+                        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                        console.error("Failed to update task - Error reading response:", e);
+                    }
+                    alert(`Failed to update task: ${errorMessage}`);
+                    return;
+                }
+            } else {
+                // Create new task
+                const response = await fetch(`/api/projects/${projectId}/tasks`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        title: data.title,
+                        description: data.description,
+                    }),
+                });
+
+                if (response.ok) {
+                    const newTask = await response.json();
+                    savedTaskId = newTask.id;
+                    setTasks((prev) => [...prev, newTask]);
+                } else {
+                    let errorMessage = "Unknown error";
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+                        console.error("Failed to create task:", errorData);
+                    } catch (e) {
+                        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                        console.error("Failed to create task - non-JSON error:", response.status, response.statusText);
+                    }
+                    alert(`Failed to create task: ${errorMessage}`);
+                    return;
+                }
+            }
+
+            // Handle subtasks
+            if (data.subtasks && data.subtasks.length > 0) {
+                const subtaskPromises = data.subtasks.map(async (subtask) => {
+                    if (subtask.action === 'delete' && subtask.id) {
+                        // Delete subtask
+                        try {
+                            await fetch(`/api/subtasks/${subtask.id}`, {
+                                method: "DELETE",
+                            });
+                        } catch (error) {
+                            console.error("Error deleting subtask:", error);
+                        }
+                    } else if (subtask.action === 'create' || !subtask.id) {
+                        // Create new subtask
+                        try {
+                            const response = await fetch(`/api/tasks/${savedTaskId}/subtasks`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    title: subtask.title,
+                                    description: subtask.description,
+                                }),
+                            });
+                            if (!response.ok) {
+                                console.error("Failed to create subtask");
+                            }
+                        } catch (error) {
+                            console.error("Error creating subtask:", error);
+                        }
+                    } else if (subtask.action === 'update' && subtask.id) {
+                        // Update existing subtask
+                        try {
+                            const response = await fetch(`/api/subtasks/${subtask.id}`, {
+                                method: "PATCH",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    title: subtask.title,
+                                    description: subtask.description,
+                                }),
+                            });
+                            if (!response.ok) {
+                                console.error("Failed to update subtask");
+                            }
+                        } catch (error) {
+                            console.error("Error updating subtask:", error);
+                        }
+                    }
+                });
+
+                await Promise.all(subtaskPromises);
+            }
+
+            // Refresh tasks to get updated subtasks
+            const refreshResponse = await fetch(`/api/projects/${projectId}/tasks`);
+            if (refreshResponse.ok) {
+                const refreshedTasks = await refreshResponse.json();
+                setTasks(refreshedTasks);
+            }
+
+            setIsTaskModalOpen(false);
+            setEditingTask(null);
+        } catch (error) {
+            console.error("Error saving task:", error);
+            alert(`Error saving task: ${error instanceof Error ? error.message : "Unknown error"}`);
+        }
+    };
+
+    const handleEditTask = (task: Task) => {
+        setEditingTask(task);
+        setIsTaskModalOpen(true);
+    };
+
+    const handleAddTask = () => {
+        setEditingTask(null);
+        setIsTaskModalOpen(true);
+    };
+
+    const handleCloseTaskModal = () => {
+        setIsTaskModalOpen(false);
+        setEditingTask(null);
+    };
+
     // Calculate overall completion percentage
     const calculateCompletionPercentage = () => {
         if (tasks.length === 0) return 0;
-        
+
         let totalItems = 0;
         let completedItems = 0;
-        
+
         tasks.forEach((task) => {
             totalItems += 1; // Count the task itself
             if (task.completed) completedItems += 1;
-            
+
             if (task.subtasks) {
                 task.subtasks.forEach((subtask) => {
                     totalItems += 1; // Count each subtask
@@ -111,7 +293,7 @@ export default function TaskModal({
                 });
             }
         });
-        
+
         return totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
     };
 
@@ -215,7 +397,7 @@ export default function TaskModal({
 
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between">
-                                                <div>
+                                                <div className="flex-1">
                                                     <p
                                                         className={`font-medium text-sm truncate ${task.completed
                                                             ? "line-through text-gray-400 dark:text-gray-500"
@@ -231,16 +413,25 @@ export default function TaskModal({
                                                     )}
                                                 </div>
 
-                                                <div className="ml-4 text-xs text-gray-500 dark:text-gray-400">
-                                                    {/* optional: show completion % */}
-                                                    {(() => {
-                                                        const total = (task.subtasks?.length ?? 0) + 1;
-                                                        const done =
-                                                            (task.completed ? 1 : 0) +
-                                                            (task.subtasks?.filter((s) => s.completed).length ?? 0);
-                                                        const percent = Math.round((done / total) * 100);
-                                                        return `${percent}%`;
-                                                    })()}
+                                                <div className="flex items-center gap-3 ml-4">
+                                                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                        {/* optional: show completion % */}
+                                                        {(() => {
+                                                            const total = (task.subtasks?.length ?? 0) + 1;
+                                                            const done =
+                                                                (task.completed ? 1 : 0) +
+                                                                (task.subtasks?.filter((s) => s.completed).length ?? 0);
+                                                            const percent = Math.round((done / total) * 100);
+                                                            return `${percent}%`;
+                                                        })()}
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleEditTask(task)}
+                                                        className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                                                        aria-label="Edit task"
+                                                    >
+                                                        <SquarePen size={16} />
+                                                    </button>
                                                 </div>
                                             </div>
 
@@ -297,11 +488,9 @@ export default function TaskModal({
                     )}
                 </div>
 
-                <footer className="px-6 py-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-end gap-3">
-
+                <footer className="px-6 py-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between gap-3">
                     <button
-                        onClick={onClose}
-                        aria-label="Close"
+                        onClick={handleAddTask}
                         className="flex items-center gap-2
                             bg-gray-900 text-white
                             hover:bg-gray-700
@@ -309,21 +498,32 @@ export default function TaskModal({
                             px-4 py-2 rounded-xl
                             shadow-sm transition-colors"
                     >
-                        Close
+                        <Plus size={16} />
+                        <span>Add Task</span>
                     </button>
 
-                    <button
-                        onClick={onClose}
-                        className="flex items-center gap-2
-                            bg-gray-900 text-white
-                            hover:bg-gray-700
-                            dark:bg-blue-700 dark:hover:bg-blue-500
-                            px-4 py-2 rounded-xl
-                            shadow-sm transition-colors"
-                    >
-                        Done
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={onClose}
+                            className="flex items-center gap-2
+                                bg-gray-900 text-white
+                                hover:bg-gray-700
+                                dark:bg-blue-700 dark:hover:bg-blue-500
+                                px-4 py-2 rounded-xl
+                                shadow-sm transition-colors"
+                        >
+                            Done
+                        </button>
+                    </div>
                 </footer>
+
+                {/* Add/Edit Task Modal */}
+                <AddTaskModal
+                    isOpen={isTaskModalOpen}
+                    onClose={handleCloseTaskModal}
+                    onSave={handleSaveTask}
+                    initialTask={editingTask}
+                />
             </div>
         </div>
     );

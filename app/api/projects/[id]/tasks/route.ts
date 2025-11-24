@@ -47,3 +47,62 @@ export async function GET(
   }
 }
 
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const { title, description } = body;
+
+    if (!title) {
+      return NextResponse.json(
+        { error: "Title is required" },
+        { status: 400 }
+      );
+    }
+
+    const newTask = await prisma.task.create({
+      data: {
+        title,
+        description: description || null,
+        projectID: id,
+        status: "pending",
+        priority: 1,
+        completed: false,
+      },
+      include: {
+        subTasks: {
+          select: {
+            id: true,
+            title: true,
+            completed: true,
+          },
+        },
+      },
+    });
+
+    // Transform to match TaskModal format
+    const formattedTask = {
+      id: newTask.id,
+      title: newTask.title,
+      description: newTask.description,
+      completed: newTask.completed,
+      subtasks: newTask.subTasks.map((sub) => ({
+        id: sub.id,
+        title: sub.title,
+        completed: sub.completed,
+      })),
+    };
+
+    return NextResponse.json(formattedTask, { status: 201 });
+  } catch (error) {
+    console.error("Error creating task:", error);
+    return NextResponse.json(
+      { error: "Failed to create task" },
+      { status: 500 }
+    );
+  }
+}
+
