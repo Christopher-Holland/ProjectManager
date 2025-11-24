@@ -1,7 +1,7 @@
 'use client';
 
 import { BarChart3, Link } from "lucide-react";
-import ThemeToggle from "./theme-toggle";
+import ThemeToggle from "@/app/components/ui/theme-toggle";
 
 export const NAVBAR_HEIGHT = 72; // 4.5rem in pixels - matches CSS variable
 

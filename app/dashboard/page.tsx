@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import ToggleSegment from "../components/ToggleSegment";
-import Navbar from "../components/navbar";
-import PageContent from "../components/page-content";
-import ProjectsList from "../components/projects-list";
-import AddModal from "../components/add-modal";
 import { Plus } from "lucide-react";
+import ToggleSegment from "@/app/components/ui/ToggleSegment";
+import Navbar from "@/app/components/layout/navbar";
+import PageContent from "@/app/components/layout/page-content";
+import ProjectsList from "@/app/components/features/projects/projects-list";
+import AddModal from "@/app/components/modals/add-modal";
 
 export default function Dashboard() {
     const [view, setView] = useState("projects");

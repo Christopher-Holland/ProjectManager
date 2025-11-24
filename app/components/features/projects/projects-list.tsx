@@ -1,17 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { Project } from "@/app/types";
 import Card from "./card";
-
-interface Project {
-  id: string;
-  title: string;
-  description: string | null;
-  status: string;
-  priority: number;
-  dueDate: Date | null;
-  userID: string;
-}
 
 export default function ProjectsList() {
   const [projects, setProjects] = useState<Project[]>([]);

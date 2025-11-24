@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Calendar, Trash2, ChevronDown, Pencil, Eye } from "lucide-react";
-import EditModal from "./edit-modal";
-import TaskModal from "./tasks-modal";
+import EditModal from "@/app/components/modals/edit-modal";
+import TaskModal from "@/app/components/modals/tasks-modal";
 
 interface CardProps {
     id: string;

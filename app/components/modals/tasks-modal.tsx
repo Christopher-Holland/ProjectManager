@@ -1,20 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-
-export type Subtask = {
-    id: string;
-    title: string;
-    completed: boolean;
-};
-
-export type Task = {
-    id: string;
-    title: string;
-    description?: string | null;
-    completed: boolean;
-    subtasks?: Subtask[];
-};
+import type { Task, Subtask } from "@/app/types";
 
 interface TaskModalProps {
     isOpen: boolean;
