@@ -8,12 +8,15 @@ import PageContent from "@/app/components/layout/page-content";
 import ProjectsList from "@/app/components/features/projects/projects-list";
 import AddModal from "@/app/components/modals/add-modal";
 import { useToast } from "@/app/components/ui/toast";
+import TasksList from "../components/features/tasks/tasks-list";
 
 export default function Dashboard() {
     const { showToast } = useToast();
-    const [view, setView] = useState("projects");
+    const [view, setView] = useState("goals");
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
+    const [highlightedProjectId, setHighlightedProjectId] = useState<string | null>(null);
+    const [tasksRefreshKey, setTasksRefreshKey] = useState(0);
 
     const handleAddProject = async (data: {
         title: string;
@@ -53,7 +56,7 @@ export default function Dashboard() {
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 p-4 text-3xl">Dashboard</h1>
                     <div className="flex items-center justify-between w-full mb-6">
-                        <ToggleSegment onChange={setView} />
+                        <ToggleSegment value={view} onChange={setView} />
 
                         <button
                             onClick={() => setIsAddModalOpen(true)}
@@ -68,7 +71,7 @@ export default function Dashboard() {
                             aria-label="Add project"
                         >
                             <Plus size={18} />
-                            Add Project
+                            Add Goal
                         </button>
                     </div>
                 </div>
@@ -76,15 +79,48 @@ export default function Dashboard() {
 
 
                 <div className="mt-8">
-                    {view === "projects" && (
+                    {view === "goals" && (
                         <div>
-                            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Projects</h2>
-                            <ProjectsList key={refreshKey} />
+                            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Goals</h2>
+                            <ProjectsList 
+                                key={refreshKey} 
+                                highlightedProjectId={highlightedProjectId}
+                                onHighlightCleared={() => setHighlightedProjectId(null)}
+                                onTasksUpdated={() => setTasksRefreshKey(prev => prev + 1)}
+                            />
                         </div>
                     )}
-                    {view === "goals" && <div className="text-gray-900 dark:text-gray-100">Goals content</div>}
-                    {view === "timeline" && <div className="text-gray-900 dark:text-gray-100">Timeline content</div>}
-                    {view === "notes" && <div className="text-gray-900 dark:text-gray-100">Notes content</div>}
+                    {view === "tasks" && (
+                        <div>
+                            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Tasks</h2>
+                            <TasksList 
+                                key={tasksRefreshKey} 
+                                onNavigateToProject={(projectId) => {
+                                    setHighlightedProjectId(projectId);
+                                    setView("goals");
+                                }}
+                                refreshTrigger={tasksRefreshKey}
+                            />
+                        </div>
+                    )}
+                    {view === "timeline" && (
+                        <div>
+                            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Timeline</h2>
+                            <div className="text-gray-900 dark:text-gray-100">Timeline content</div>
+                        </div>
+                    )}
+                    {view === "notes" && (
+                        <div>
+                            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Notes</h2>
+                            <div className="text-gray-900 dark:text-gray-100">Notes content</div>
+                        </div>
+                    )}
+                    {view === "settings" && (
+                        <div>
+                            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Settings</h2>
+                            <div className="text-gray-900 dark:text-gray-100">Settings content</div>
+                        </div>
+                    )}
                 </div>
 
                 <AddModal

@@ -1,0 +1,119 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+export async function GET(request: NextRequest) {
+  try {
+    // Match the projects GET endpoint behavior - no user filtering
+    // This fetches all tasks from all projects
+
+    // Get all projects (matching the projects GET endpoint behavior - no user filter)
+    const allProjects = await prisma.project.findMany({
+      select: {
+        id: true,
+        title: true,
+        userID: true,
+        status: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    console.log(`Total projects in DB: ${allProjects.length}`);
+    
+    // Create project map for all projects (including status)
+    const projectMap = new Map(allProjects.map((p) => [p.id, { title: p.title, status: p.status }]));
+    const allProjectIds = allProjects.map((p) => p.id);
+
+    console.log(`All project IDs: ${allProjectIds.join(", ")}`);
+
+    // Fetch ALL tasks from ALL projects (matching projects endpoint behavior)
+    const tasks = await prisma.task.findMany({
+      where: {
+        projectID: {
+          in: allProjectIds,
+        },
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    console.log(`Found ${tasks.length} tasks across ${allProjectIds.length} projects`);
+    
+    // Log task distribution by project
+    const tasksByProject = tasks.reduce((acc, task) => {
+      acc[task.projectID] = (acc[task.projectID] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    console.log("Tasks by project:", JSON.stringify(tasksByProject, null, 2));
+    
+    if (tasks.length === 0) {
+      console.log("WARNING: No tasks found in database!");
+    }
+
+    console.log(`Found ${tasks.length} tasks across all projects`);
+
+    // Get all task IDs to fetch subtasks
+    const taskIds = tasks.map((t) => t.id);
+
+    // Fetch all subtasks separately
+    const allSubtasks = taskIds.length > 0 ? await prisma.subTask.findMany({
+      where: {
+        taskID: {
+          in: taskIds,
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        completed: true,
+        taskID: true,
+      },
+    }) : [];
+
+    // Group subtasks by taskID
+    const subtasksByTaskId = allSubtasks.reduce((acc, sub) => {
+      if (!acc[sub.taskID!]) {
+        acc[sub.taskID!] = [];
+      }
+      acc[sub.taskID!].push(sub);
+      return acc;
+    }, {} as Record<string, typeof allSubtasks>);
+
+    // Transform to match Task type format
+    const formattedTasks = tasks.map((task) => {
+      const projectInfo = projectMap.get(task.projectID) || { title: "Unknown Project", status: "active" };
+      return {
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        completed: task.completed,
+        status: task.status,
+        priority: task.priority,
+        dueDate: task.dueDate,
+        projectID: task.projectID,
+        projectTitle: projectInfo.title,
+        projectStatus: projectInfo.status,
+        subtasks: (subtasksByTaskId[task.id] || []).map((sub) => ({
+          id: sub.id,
+          title: sub.title,
+          description: sub.description,
+          completed: sub.completed,
+        })),
+      };
+    });
+
+    console.log(`Returning ${formattedTasks.length} formatted tasks`);
+
+    return NextResponse.json(formattedTasks);
+  } catch (error) {
+    console.error("Error fetching tasks:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch tasks" },
+      { status: 500 }
+    );
+  }
+}
+

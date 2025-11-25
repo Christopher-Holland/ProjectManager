@@ -25,6 +25,7 @@ interface CardProps {
         status: string;
         release?: string;
     }) => Promise<void>;
+    onTasksUpdated?: () => void;
 }
 
 export default function Card({
@@ -39,6 +40,7 @@ export default function Card({
     onDelete,
     onEdit,
     onUpdate,
+    onTasksUpdated,
 }: CardProps) {
 
     // ----- Calculate days remaining -----
@@ -291,6 +293,7 @@ export default function Card({
                 onClose={() => setIsTasksModalOpen(false)}
                 projectId={id}
                 projectTitle={`${title} - Tasks`}
+                onTasksUpdated={onTasksUpdated}
             />
 
             {/* Confirm Delete Modal */}

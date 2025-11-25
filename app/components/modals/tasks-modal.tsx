@@ -11,6 +11,7 @@ interface TaskModalProps {
     onClose: () => void;
     projectId: string;
     projectTitle?: string;
+    onTasksUpdated?: () => void;
 }
 
 export default function TaskModal({
@@ -18,6 +19,7 @@ export default function TaskModal({
     onClose,
     projectId,
     projectTitle = "Tasks",
+    onTasksUpdated,
 }: TaskModalProps) {
     const { showToast } = useToast();
     const [tasks, setTasks] = useState<Task[]>([]);
@@ -54,18 +56,27 @@ export default function TaskModal({
 
     const handleToggleTask = async (taskId: string, completed: boolean) => {
         try {
+            // Update both completed status and status field
+            const newStatus = completed ? "completed" : "pending";
             const response = await fetch(`/api/tasks/${taskId}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ completed }),
+                body: JSON.stringify({ completed, status: newStatus }),
             });
 
             if (response.ok) {
+                const updatedTask = await response.json();
                 setTasks((prev) =>
                     prev.map((task) =>
-                        task.id === taskId ? { ...task, completed } : task
+                        task.id === taskId ? { 
+                            ...task, 
+                            completed: updatedTask.completed,
+                            status: updatedTask.status 
+                        } : task
                     )
                 );
+                // Notify parent that tasks were updated
+                onTasksUpdated?.();
             }
         } catch (error) {
             console.error("Error updating task:", error);
@@ -93,6 +104,8 @@ export default function TaskModal({
                             : task
                     )
                 );
+                // Notify parent that tasks were updated
+                onTasksUpdated?.();
             }
         } catch (error) {
             console.error("Error updating subtask:", error);
@@ -289,6 +302,9 @@ export default function TaskModal({
                 console.error("Failed to refresh tasks after save");
             }
 
+            // Notify parent that tasks were updated
+            onTasksUpdated?.();
+
             setIsTaskModalOpen(false);
             setEditingTask(null);
         } catch (error) {
@@ -340,6 +356,8 @@ export default function TaskModal({
                     setEditingTask(null);
                 }
                 showToast("Task deleted successfully", "success");
+                // Notify parent that tasks were updated
+                onTasksUpdated?.();
             } else {
                 const errorData = await response.json();
                 console.error("Failed to delete task:", errorData);

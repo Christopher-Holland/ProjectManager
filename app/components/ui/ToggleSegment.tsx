@@ -3,26 +3,34 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { ListChecks, Target, Calendar, NotebookPen } from "lucide-react";
+import { ListChecks, Target, Calendar, NotebookPen, Settings } from "lucide-react";
 
 const options = [
-    { key: "projects", label: "Projects", icon: ListChecks },
-    { key: "goals", label: "Goals", icon: Target },
+    { key: "goals", label: "Goals", icon: ListChecks },
+    { key: "tasks", label: "Tasks", icon: Target },
     { key: "timeline", label: "Timeline", icon: Calendar },
     { key: "notes", label: "Notes", icon: NotebookPen },
+    { key: "settings", label: "Settings", icon: Settings },
 ];
 
 interface ToggleSegmentProps {
+    value?: string;
     onChange?: (key: string) => void;
+    defaultValue?: string;
 }
 
-export default function ToggleSegment({ onChange }: ToggleSegmentProps) {
-    const [selected, setSelected] = useState("projects");
+export default function ToggleSegment({ value, onChange, defaultValue = "goals" }: ToggleSegmentProps) {
+    const [internalSelected, setInternalSelected] = useState(defaultValue);
     const [highlightStyle, setHighlightStyle] = useState({ left: 0, width: 0 });
     const buttonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
 
+    // Use controlled value if provided, otherwise use internal state
+    const selected = value !== undefined ? value : internalSelected;
+
     const handleClick = (key: string) => {
-        setSelected(key);
+        if (value === undefined) {
+            setInternalSelected(key);
+        }
         onChange?.(key);
     };
 

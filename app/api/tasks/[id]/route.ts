@@ -10,12 +10,14 @@ export async function PATCH(
     console.log(`PATCH /api/tasks/${id} - Received request`);
     const body = await request.json();
     console.log(`PATCH /api/tasks/${id} - Request body:`, body);
-    const { completed, title, description } = body;
+    const { completed, title, description, status, priority } = body;
 
     const updateData: { 
       completed?: boolean;
       title?: string;
       description?: string | null;
+      status?: string;
+      priority?: number;
     } = {};
 
     if (completed !== undefined) updateData.completed = completed;
@@ -29,6 +31,8 @@ export async function PATCH(
       updateData.title = title;
     }
     if (description !== undefined) updateData.description = description || null;
+    if (status !== undefined) updateData.status = status;
+    if (priority !== undefined) updateData.priority = priority;
 
     // If no fields to update, return the existing task
     if (Object.keys(updateData).length === 0) {
@@ -43,22 +47,36 @@ export async function PATCH(
         );
       }
 
-      // Fetch subtasks separately
-      const subtasks = await prisma.subTask.findMany({
-        where: { taskID: id },
-        select: {
-          id: true,
-          title: true,
-          description: true,
-          completed: true,
-        },
-      });
+      // Fetch project and subtasks separately
+      const [project, subtasks] = await Promise.all([
+        prisma.project.findUnique({
+          where: { id: existingTask.projectID },
+          select: {
+            id: true,
+            title: true,
+          },
+        }),
+        prisma.subTask.findMany({
+          where: { taskID: id },
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            completed: true,
+          },
+        }),
+      ]);
 
       return NextResponse.json({
         id: existingTask.id,
         title: existingTask.title,
         description: existingTask.description,
         completed: existingTask.completed,
+        status: existingTask.status,
+        priority: existingTask.priority,
+        dueDate: existingTask.dueDate,
+        projectID: existingTask.projectID,
+        projectTitle: project?.title || "",
         subtasks: subtasks.map((sub) => ({
           id: sub.id,
           title: sub.title,
@@ -78,16 +96,25 @@ export async function PATCH(
 
     console.log(`PATCH /api/tasks/${id} - Task updated successfully`);
 
-    // Fetch subtasks separately to avoid transaction issues
-    const subtasks = await prisma.subTask.findMany({
-      where: { taskID: id },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        completed: true,
-      },
-    });
+    // Fetch project and subtasks separately to avoid transaction issues
+    const [project, subtasks] = await Promise.all([
+      prisma.project.findUnique({
+        where: { id: updatedTask.projectID },
+        select: {
+          id: true,
+          title: true,
+        },
+      }),
+      prisma.subTask.findMany({
+        where: { taskID: id },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          completed: true,
+        },
+      }),
+    ]);
 
     // Transform to match TaskModal format
     const formattedTask = {
@@ -95,6 +122,11 @@ export async function PATCH(
       title: updatedTask.title,
       description: updatedTask.description,
       completed: updatedTask.completed,
+      status: updatedTask.status,
+      priority: updatedTask.priority,
+      dueDate: updatedTask.dueDate,
+      projectID: updatedTask.projectID,
+      projectTitle: project?.title || "",
       subtasks: subtasks.map((sub) => ({
         id: sub.id,
         title: sub.title,

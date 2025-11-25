@@ -1,12 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { Project } from "@/app/types";
 import Card from "./card";
 
-export default function ProjectsList() {
+interface ProjectsListProps {
+  highlightedProjectId?: string | null;
+  onHighlightCleared?: () => void;
+  onTasksUpdated?: () => void;
+}
+
+export default function ProjectsList({ highlightedProjectId, onHighlightCleared, onTasksUpdated }: ProjectsListProps = {}) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const highlightedRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function fetchProjects() {
@@ -25,6 +32,20 @@ export default function ProjectsList() {
 
     fetchProjects();
   }, []);
+
+  // Scroll to highlighted project when it changes
+  useEffect(() => {
+    if (highlightedProjectId && highlightedRef.current) {
+      highlightedRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+      // Clear highlight after scrolling
+      setTimeout(() => {
+        onHighlightCleared?.();
+      }, 2000);
+    }
+  }, [highlightedProjectId, onHighlightCleared]);
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
@@ -117,19 +138,25 @@ export default function ProjectsList() {
           </div>
         ) : (
           projectList.map((project) => (
-            <Card
+            <div
               key={project.id}
-              id={project.id}
-              title={project.title}
-              description={project.description}
-              dueDate={project.dueDate}
-              priority={project.priority}
-              status={project.status}
-              onStatusChange={handleStatusChange}
-              onDelete={handleDelete}
-              onEdit={handleEdit}
-              onUpdate={handleUpdate}
+              ref={project.id === highlightedProjectId ? highlightedRef : null}
+              className={project.id === highlightedProjectId ? "ring-2 ring-blue-500 rounded-lg transition-all duration-1000" : ""}
+            >
+            <Card
+                id={project.id}
+                title={project.title}
+                description={project.description}
+                dueDate={project.dueDate}
+                priority={project.priority}
+                status={project.status}
+                onStatusChange={handleStatusChange}
+                onDelete={handleDelete}
+                onEdit={handleEdit}
+                onUpdate={handleUpdate}
+                onTasksUpdated={onTasksUpdated}
             />
+            </div>
           ))
         )}
       </div>
