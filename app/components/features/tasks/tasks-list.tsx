@@ -197,10 +197,13 @@ export default function TasksList({ onNavigateToProject, refreshTrigger }: Tasks
     });
   };
 
-  // Group tasks by project status (active, in_progress, completed)
-  const todoTasks = sortTasks(tasks.filter((t) => t.projectStatus === "active"));
-  const inProgressTasks = sortTasks(tasks.filter((t) => t.projectStatus === "in_progress"));
-  const completedTasks = sortTasks(tasks.filter((t) => t.projectStatus === "completed"));
+  // Group tasks by completion status first, then by project status for incomplete tasks
+  const completedTasks = sortTasks(tasks.filter((t) => t.completed || t.status === "completed"));
+  const incompleteTasks = tasks.filter((t) => !t.completed && t.status !== "completed");
+  
+  // Group incomplete tasks by project status
+  const todoTasks = sortTasks(incompleteTasks.filter((t) => t.projectStatus === "active"));
+  const inProgressTasks = sortTasks(incompleteTasks.filter((t) => t.projectStatus === "in_progress"));
 
   const renderColumn = (title: string, taskList: typeof tasks) => (
     <div className="flex flex-col">

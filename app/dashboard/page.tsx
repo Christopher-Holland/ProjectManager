@@ -58,21 +58,23 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between w-full mb-6">
                         <ToggleSegment value={view} onChange={setView} />
 
-                        <button
-                            onClick={() => setIsAddModalOpen(true)}
-                            className="
-                            flex items-center gap-2
-                            bg-gray-900 text-white
-                            hover:bg-gray-700
-                            dark:bg-blue-700 dark:hover:bg-blue-500
-                            px-4 py-2 rounded-xl
-                            shadow-sm transition-colors
-                        "
-                            aria-label="Add project"
-                        >
-                            <Plus size={18} />
-                            Add Goal
-                        </button>
+                        {view === "goals" && (
+                            <button
+                                onClick={() => setIsAddModalOpen(true)}
+                                className="
+                                flex items-center gap-2
+                                bg-gray-900 text-white
+                                hover:bg-gray-700
+                                dark:bg-blue-700 dark:hover:bg-blue-500
+                                px-4 py-2 rounded-xl
+                                shadow-sm transition-colors
+                            "
+                                aria-label="Add goal"
+                            >
+                                <Plus size={18} />
+                                Add Goal
+                            </button>
+                        )}
                     </div>
                 </div>
 
