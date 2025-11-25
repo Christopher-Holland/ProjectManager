@@ -160,10 +160,47 @@ export default function TasksList({ onNavigateToProject, refreshTrigger }: Tasks
     return <div className="text-gray-600 dark:text-gray-400">Loading tasks...</div>;
   }
 
+  // Helper function to check if a task is overdue
+  const isOverdue = (task: typeof tasks[0]) => {
+    if (!task.dueDate) return false;
+    const now = new Date();
+    const dueDate = new Date(task.dueDate);
+    return dueDate < now && !task.completed;
+  };
+
+  // Sort function: overdue first, then by priority (high to low), then by due date (earliest first)
+  const sortTasks = (taskList: typeof tasks) => {
+    return [...taskList].sort((a, b) => {
+      // First: Overdue tasks come first
+      const aOverdue = isOverdue(a);
+      const bOverdue = isOverdue(b);
+      if (aOverdue && !bOverdue) return -1;
+      if (!aOverdue && bOverdue) return 1;
+
+      // Second: Higher priority comes first (3 > 2 > 1)
+      if (a.priority !== b.priority) {
+        return (b.priority || 1) - (a.priority || 1);
+      }
+
+      // Third: Earlier due dates come first (if both have due dates)
+      if (a.dueDate && b.dueDate) {
+        const aDate = new Date(a.dueDate).getTime();
+        const bDate = new Date(b.dueDate).getTime();
+        return aDate - bDate;
+      }
+      // Tasks with due dates come before tasks without
+      if (a.dueDate && !b.dueDate) return -1;
+      if (!a.dueDate && b.dueDate) return 1;
+
+      // Finally: Sort by title alphabetically as tiebreaker
+      return (a.title || "").localeCompare(b.title || "");
+    });
+  };
+
   // Group tasks by project status (active, in_progress, completed)
-  const todoTasks = tasks.filter((t) => t.projectStatus === "active");
-  const inProgressTasks = tasks.filter((t) => t.projectStatus === "in_progress");
-  const completedTasks = tasks.filter((t) => t.projectStatus === "completed");
+  const todoTasks = sortTasks(tasks.filter((t) => t.projectStatus === "active"));
+  const inProgressTasks = sortTasks(tasks.filter((t) => t.projectStatus === "in_progress"));
+  const completedTasks = sortTasks(tasks.filter((t) => t.projectStatus === "completed"));
 
   const renderColumn = (title: string, taskList: typeof tasks) => (
     <div className="flex flex-col">
