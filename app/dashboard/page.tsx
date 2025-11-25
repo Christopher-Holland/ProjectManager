@@ -7,8 +7,10 @@ import Navbar from "@/app/components/layout/navbar";
 import PageContent from "@/app/components/layout/page-content";
 import ProjectsList from "@/app/components/features/projects/projects-list";
 import AddModal from "@/app/components/modals/add-modal";
+import { useToast } from "@/app/components/ui/toast";
 
 export default function Dashboard() {
+    const { showToast } = useToast();
     const [view, setView] = useState("projects");
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
@@ -32,14 +34,15 @@ export default function Dashboard() {
                 setIsAddModalOpen(false);
                 // Trigger refresh of ProjectsList
                 setRefreshKey((prev) => prev + 1);
+                showToast("Project created successfully", "success");
             } else {
                 const errorData = await response.json();
                 console.error("Failed to create project:", errorData);
-                alert(`Failed to create project: ${errorData.error || "Unknown error"}`);
+                showToast(`Failed to create project: ${errorData.error || "Unknown error"}`, "error");
             }
         } catch (error) {
             console.error("Error creating project:", error);
-            alert(`Error creating project: ${error instanceof Error ? error.message : "Unknown error"}`);
+            showToast(`Error creating project: ${error instanceof Error ? error.message : "Unknown error"}`, "error");
         }
     };
 

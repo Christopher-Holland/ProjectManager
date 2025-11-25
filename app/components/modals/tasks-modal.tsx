@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import type { Task, Subtask } from "@/app/types";
 import { Plus, SquarePen } from "lucide-react";
 import AddTaskModal from "./editTask-modal";
+import { useToast } from "@/app/components/ui/toast";
 
 interface TaskModalProps {
     isOpen: boolean;
@@ -18,6 +19,7 @@ export default function TaskModal({
     projectId,
     projectTitle = "Tasks",
 }: TaskModalProps) {
+    const { showToast } = useToast();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -111,7 +113,7 @@ export default function TaskModal({
                 // Validate taskId
                 if (!data.taskId || data.taskId.trim() === '') {
                     console.error("Invalid taskId:", data.taskId);
-                    alert("Failed to update task: Invalid task ID");
+                    showToast("Failed to update task: Invalid task ID", "error");
                     return;
                 }
                 
@@ -142,6 +144,7 @@ export default function TaskModal({
                             task.id === data.taskId ? updatedTask : task
                         )
                     );
+                    showToast("Task updated successfully", "success");
                 } else {
                     let errorMessage = "Unknown error";
                     let errorDetails: any = null;
@@ -160,7 +163,7 @@ export default function TaskModal({
                         errorMessage = `HTTP ${response.status}: ${response.statusText}`;
                         console.error("Failed to update task - Error reading response:", e);
                     }
-                    alert(`Failed to update task: ${errorMessage}`);
+                    showToast(`Failed to update task: ${errorMessage}`, "error");
                     return;
                 }
             } else {
@@ -186,6 +189,7 @@ export default function TaskModal({
                     const newTask = await response.json();
                     savedTaskId = newTask.id;
                     setTasks((prev) => [...prev, newTask]);
+                    showToast("Task created successfully", "success");
                 } else {
                     let errorMessage = "Unknown error";
                     let errorDetails: any = null;
@@ -204,7 +208,7 @@ export default function TaskModal({
                         errorMessage = `HTTP ${response.status}: ${response.statusText}`;
                         console.error("Failed to create task - Error reading response:", e);
                     }
-                    alert(`Failed to create task: ${errorMessage}`);
+                    showToast(`Failed to create task: ${errorMessage}`, "error");
                     return;
                 }
             }
@@ -289,7 +293,7 @@ export default function TaskModal({
             setEditingTask(null);
         } catch (error) {
             console.error("Error saving task:", error);
-            alert(`Error saving task: ${error instanceof Error ? error.message : "Unknown error"}`);
+            showToast(`Error saving task: ${error instanceof Error ? error.message : "Unknown error"}`, "error");
         }
     };
 
@@ -317,6 +321,34 @@ export default function TaskModal({
             setEditingTask(task);
         }
         setIsTaskModalOpen(true);
+    };
+
+    const handleDeleteTask = async (taskId: string) => {
+        try {
+            console.log(`Deleting task ${taskId}`);
+            const response = await fetch(`/api/tasks/${taskId}`, {
+                method: "DELETE",
+            });
+
+            if (response.ok) {
+                console.log(`Task ${taskId} deleted successfully`);
+                // Remove the task from the list
+                setTasks((prev) => prev.filter((task) => task.id !== taskId));
+                // Close the edit modal if it's open for this task
+                if (editingTask?.id === taskId) {
+                    setIsTaskModalOpen(false);
+                    setEditingTask(null);
+                }
+                showToast("Task deleted successfully", "success");
+            } else {
+                const errorData = await response.json();
+                console.error("Failed to delete task:", errorData);
+                showToast(`Failed to delete task: ${errorData.error || "Unknown error"}`, "error");
+            }
+        } catch (error) {
+            console.error("Error deleting task:", error);
+            showToast(`Error deleting task: ${error instanceof Error ? error.message : "Unknown error"}`, "error");
+        }
     };
 
     const handleAddTask = () => {
@@ -576,6 +608,7 @@ export default function TaskModal({
                     isOpen={isTaskModalOpen}
                     onClose={handleCloseTaskModal}
                     onSave={handleSaveTask}
+                    onDelete={handleDeleteTask}
                     initialTask={editingTask}
                 />
             </div>

@@ -4,6 +4,7 @@ import { stackClientApp } from "../stack/client";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/app/components/ui/theme-provider";
+import { ToastProvider } from "@/app/components/ui/toast";
 import Navbar from "@/app/components/layout/navbar";
 
 const geistSans = Geist({
@@ -50,12 +51,13 @@ export default function RootLayout({
           }}
         />
         <ThemeProvider>
-          
-          <StackProvider app={stackClientApp}>
-            <StackTheme>
-              {children}
-            </StackTheme>
-          </StackProvider>
+          <ToastProvider>
+            <StackProvider app={stackClientApp}>
+              <StackTheme>
+                {children}
+              </StackTheme>
+            </StackProvider>
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

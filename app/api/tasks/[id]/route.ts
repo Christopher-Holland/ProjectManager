@@ -124,3 +124,37 @@ export async function PATCH(
   }
 }
 
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    console.log(`DELETE /api/tasks/${id} - Deleting task`);
+
+    // Delete the task (subtasks will be deleted automatically due to cascade)
+    await prisma.task.delete({
+      where: { id },
+    });
+
+    console.log(`DELETE /api/tasks/${id} - Task deleted successfully`);
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (error: any) {
+    console.error("Error deleting task:", error);
+    
+    // Handle Prisma not found error
+    if (error?.code === 'P2025') {
+      return NextResponse.json(
+        { error: "Task not found" },
+        { status: 404 }
+      );
+    }
+    
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    return NextResponse.json(
+      { error: "Failed to delete task", message: errorMessage },
+      { status: 500 }
+    );
+  }
+}
+

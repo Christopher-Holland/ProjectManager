@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Calendar, Trash2, ChevronDown, Pencil, Eye } from "lucide-react";
 import EditModal from "@/app/components/modals/edit-modal";
 import TaskModal from "@/app/components/modals/tasks-modal";
+import ConfirmModal from "@/app/components/modals/confirm-modal";
 
 interface CardProps {
     id: string;
@@ -83,6 +84,7 @@ export default function Card({
     const [localStatus, setLocalStatus] = useState(status);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isTasksModalOpen, setIsTasksModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [completionPercentage, setCompletionPercentage] = useState<number | null>(null);
 
     // Update local status when prop changes
@@ -133,8 +135,8 @@ export default function Card({
     };
 
     const handleDelete = () => {
-        if (onDelete && confirm("Are you sure you want to delete this project?")) {
-            onDelete(id);
+        if (onDelete) {
+            setIsDeleteModalOpen(true);
         }
     };
 
@@ -290,6 +292,19 @@ export default function Card({
                 projectId={id}
                 projectTitle={`${title} - Tasks`}
             />
+
+            {/* Confirm Delete Modal */}
+            {onDelete && (
+                <ConfirmModal
+                    isOpen={isDeleteModalOpen}
+                    onClose={() => setIsDeleteModalOpen(false)}
+                    onConfirm={() => onDelete(id)}
+                    title="Delete Project"
+                    message="Are you sure you want to delete this project? This action cannot be undone."
+                    confirmText="Delete Project"
+                    variant="danger"
+                />
+            )}
         </div>
     );
 }
