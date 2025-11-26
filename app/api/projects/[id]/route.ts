@@ -66,23 +66,36 @@ export async function PATCH(
             updatedProject.dueDate.toISOString()
           );
 
-          // Update tasks with their assigned due dates
-          const updatePromises = schedule
-            .filter((item) => item.type === "task")
-            .map((item) => {
+          // Update tasks and subtasks with their assigned due dates
+          const updatePromises: Promise<any>[] = [];
+          
+          schedule.forEach((item) => {
+            if (item.type === "task") {
               const task = tasks[item.taskIndex];
               if (task) {
-                return prisma.task.update({
-                  where: { id: task.id },
-                  data: { dueDate: item.date },
-                });
+                updatePromises.push(
+                  prisma.task.update({
+                    where: { id: task.id },
+                    data: { dueDate: item.date },
+                  })
+                );
               }
-              return null;
-            })
-            .filter((promise) => promise !== null);
+            } else if (item.type === "subtask" && item.subIndex !== undefined) {
+              const task = tasks[item.taskIndex];
+              const subtask = task?.subTasks[item.subIndex];
+              if (subtask) {
+                updatePromises.push(
+                  prisma.subTask.update({
+                    where: { id: subtask.id },
+                    data: { dueDate: item.date },
+                  })
+                );
+              }
+            }
+          });
 
           await Promise.all(updatePromises);
-          console.log(`Generated timeline for ${updatePromises.length} tasks`);
+          console.log(`Generated timeline for ${updatePromises.length} items (tasks and subtasks)`);
         }
       } catch (timelineError) {
         // Log error but don't fail the project update

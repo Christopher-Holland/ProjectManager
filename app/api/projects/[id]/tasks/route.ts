@@ -25,6 +25,7 @@ export async function GET(
         title: true,
         description: true,
         completed: true,
+        dueDate: true,
         taskID: true,
       },
     }) : [];
@@ -49,6 +50,7 @@ export async function GET(
         title: sub.title,
         description: sub.description,
         completed: sub.completed,
+        dueDate: sub.dueDate,
       })),
     }));
 
@@ -130,20 +132,33 @@ export async function POST(
             project.dueDate.toISOString()
           );
 
-          // Update all tasks with their assigned due dates
-          const updatePromises = schedule
-            .filter((item) => item.type === "task")
-            .map((item) => {
+          // Update all tasks and subtasks with their assigned due dates
+          const updatePromises: Promise<any>[] = [];
+          
+          schedule.forEach((item) => {
+            if (item.type === "task") {
               const task = allTasks[item.taskIndex];
               if (task) {
-                return prisma.task.update({
-                  where: { id: task.id },
-                  data: { dueDate: item.date },
-                });
+                updatePromises.push(
+                  prisma.task.update({
+                    where: { id: task.id },
+                    data: { dueDate: item.date },
+                  })
+                );
               }
-              return null;
-            })
-            .filter((promise) => promise !== null);
+            } else if (item.type === "subtask" && item.subIndex !== undefined) {
+              const task = allTasks[item.taskIndex];
+              const subtask = task?.subTasks[item.subIndex];
+              if (subtask) {
+                updatePromises.push(
+                  prisma.subTask.update({
+                    where: { id: subtask.id },
+                    data: { dueDate: item.date },
+                  })
+                );
+              }
+            }
+          });
 
           await Promise.all(updatePromises);
           console.log(`Regenerated timeline after task creation`);
@@ -162,6 +177,7 @@ export async function POST(
         title: true,
         description: true,
         completed: true,
+        dueDate: true,
       },
     });
 
@@ -182,6 +198,7 @@ export async function POST(
         title: sub.title,
         description: sub.description,
         completed: sub.completed,
+        dueDate: sub.dueDate,
       })),
     };
 

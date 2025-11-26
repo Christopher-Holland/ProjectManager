@@ -60,6 +60,7 @@ model SubTask {
   task      Task?    @relation(fields: [taskID], references: [id], onDelete: Cascade)
   title     String
   description String?
+  dueDate   DateTime?
   completed Boolean  @default(false)
 
   createdAt DateTime @default(now())
@@ -67,4 +68,20 @@ model SubTask {
 
   @@index([projectID])
   @@index([taskID])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  userID    String   // Stack Auth User Id
+  title     String
+  content   String?
+  tags      String?  // Comma-separated tags
+  pinned    Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userID])
+  @@index([createdAt])
+  @@index([pinned])
 }

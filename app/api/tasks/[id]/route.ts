@@ -63,6 +63,7 @@ export async function PATCH(
             title: true,
             description: true,
             completed: true,
+            dueDate: true,
           },
         }),
       ]);
@@ -82,6 +83,7 @@ export async function PATCH(
           title: sub.title,
           description: sub.description,
           completed: sub.completed,
+          dueDate: sub.dueDate,
         })),
       });
     }
@@ -112,6 +114,7 @@ export async function PATCH(
           title: true,
           description: true,
           completed: true,
+          dueDate: true,
         },
       }),
     ]);
@@ -132,6 +135,7 @@ export async function PATCH(
         title: sub.title,
         description: sub.description,
         completed: sub.completed,
+        dueDate: sub.dueDate,
       })),
     };
 

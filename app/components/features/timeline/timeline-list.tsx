@@ -34,9 +34,12 @@ export default function TimelineList() {
                 // Fetch all tasks
                 const tasksResponse = await fetch("/api/tasks");
                 if (!tasksResponse.ok) {
-                    throw new Error("Failed to fetch tasks");
+                    const errorText = await tasksResponse.text();
+                    console.error("Failed to fetch tasks - Response:", tasksResponse.status, errorText);
+                    throw new Error(`Failed to fetch tasks: ${tasksResponse.status} ${errorText}`);
                 }
                 const tasks = await tasksResponse.json();
+                console.log("Fetched tasks:", tasks.length);
 
                 // Build timeline items array
                 const timelineItems: TimelineItem[] = [];
@@ -70,7 +73,7 @@ export default function TimelineList() {
                 });
 
                 // Add tasks with due dates (exclude completed and overdue)
-                tasks.forEach((task: Task & { projectTitle?: string; projectID?: string }) => {
+                tasks.forEach((task: Task & { projectTitle?: string; projectID?: string; subtasks?: Array<{ id: string; title: string; dueDate?: Date | string; completed: boolean }> }) => {
                     if (task.dueDate) {
                         const taskCompleted = task.completed || task.status === "completed";
                         const taskOverdue = isOverdue(task.dueDate);
@@ -90,8 +93,28 @@ export default function TimelineList() {
                         }
                     }
 
-                    // Add subtasks (they don't have due dates in schema, but we can show them if needed)
-                    // For now, we'll skip subtasks since they don't have dueDate in the schema
+                    // Add subtasks with due dates (exclude completed and overdue)
+                    if (task.subtasks && Array.isArray(task.subtasks)) {
+                        task.subtasks.forEach((subtask) => {
+                            if (subtask.dueDate) {
+                                const subtaskCompleted = subtask.completed;
+                                const subtaskOverdue = isOverdue(subtask.dueDate);
+                                
+                                // Skip if completed AND overdue
+                                if (!(subtaskCompleted && subtaskOverdue)) {
+                                    timelineItems.push({
+                                        id: subtask.id,
+                                        title: subtask.title,
+                                        dueDate: subtask.dueDate,
+                                        type: "subtask",
+                                        status: subtask.completed ? "completed" : "pending",
+                                        projectTitle: task.projectTitle,
+                                        completed: subtask.completed,
+                                    });
+                                }
+                            }
+                        });
+                    }
                 });
 
                 // Sort by due date (earliest first)

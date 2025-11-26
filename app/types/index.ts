@@ -5,6 +5,7 @@ export type Subtask = {
     title: string;
     completed: boolean;
     description?: string | null;
+    dueDate?: Date | string | null;
 };
 
 export type Task = {

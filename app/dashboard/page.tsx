@@ -10,6 +10,7 @@ import AddModal from "@/app/components/modals/add-modal";
 import { useToast } from "@/app/components/ui/toast";
 import TasksList from "../components/features/tasks/tasks-list";
 import TimelineList from "../components/features/timeline/timeline-list";
+import NotesList from "../components/features/notes/notes-list";
 
 export default function Dashboard() {
     const { showToast } = useToast();
@@ -76,6 +77,22 @@ export default function Dashboard() {
                                 Add Goal
                             </button>
                         )}
+                        {view === "notes" && (
+                            <button
+                                onClick={() => setIsAddNoteModalOpen(true)}
+                                className="
+                                flex items-center gap-2
+                                bg-gray-900 text-white
+                                hover:bg-gray-700
+                                dark:bg-blue-700 dark:hover:bg-blue-500
+                                px-4 py-2 rounded-xl
+                                shadow-sm transition-colors"
+                                aria-label="Add note"
+                            >
+                                <Plus size={18} />
+                                Add Note
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -115,7 +132,7 @@ export default function Dashboard() {
                     {view === "notes" && (
                         <div>
                             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Notes</h2>
-                            <div className="text-gray-900 dark:text-gray-100">Notes content</div>
+                            <NotesList />
                         </div>
                     )}
                     {view === "settings" && (

@@ -81,9 +81,12 @@ export async function POST(
         const task = tasks[item.taskIndex];
         const subtask = task?.subTasks[item.subIndex];
         if (subtask) {
-          // Note: Subtasks don't have dueDate in schema, so we'll store it in description or skip
-          // For now, we'll skip subtask due dates since they're not in the schema
-          // You may want to add dueDate to SubTask model later
+          updatePromises.push(
+            prisma.subTask.update({
+              where: { id: subtask.id },
+              data: { dueDate: item.date },
+            })
+          );
         }
       }
     });

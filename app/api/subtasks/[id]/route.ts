@@ -90,20 +90,33 @@ export async function DELETE(
               project.dueDate.toISOString()
             );
 
-            // Update all tasks with their assigned due dates
-            const updatePromises = schedule
-              .filter((item) => item.type === "task")
-              .map((item) => {
-                const t = allTasks[item.taskIndex];
-                if (t) {
-                  return prisma.task.update({
-                    where: { id: t.id },
-                    data: { dueDate: item.date },
-                  });
+            // Update all tasks and subtasks with their assigned due dates
+            const updatePromises: Promise<any>[] = [];
+            
+            schedule.forEach((item) => {
+              if (item.type === "task") {
+                const task = allTasks[item.taskIndex];
+                if (task) {
+                  updatePromises.push(
+                    prisma.task.update({
+                      where: { id: task.id },
+                      data: { dueDate: item.date },
+                    })
+                  );
                 }
-                return null;
-              })
-              .filter((promise) => promise !== null);
+              } else if (item.type === "subtask" && item.subIndex !== undefined) {
+                const task = allTasks[item.taskIndex];
+                const subtask = task?.subTasks[item.subIndex];
+                if (subtask) {
+                  updatePromises.push(
+                    prisma.subTask.update({
+                      where: { id: subtask.id },
+                      data: { dueDate: item.date },
+                    })
+                  );
+                }
+              }
+            });
 
             await Promise.all(updatePromises);
             console.log(`Regenerated timeline after subtask deletion`);

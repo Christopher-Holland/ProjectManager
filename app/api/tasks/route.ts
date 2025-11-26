@@ -27,6 +27,12 @@ export async function GET(request: NextRequest) {
 
     console.log(`All project IDs: ${allProjectIds.join(", ")}`);
 
+    // If no projects, return empty array
+    if (allProjectIds.length === 0) {
+      console.log("No projects found, returning empty tasks array");
+      return NextResponse.json([]);
+    }
+
     // Fetch ALL tasks from ALL projects (matching projects endpoint behavior)
     const tasks = await prisma.task.findMany({
       where: {
@@ -69,6 +75,7 @@ export async function GET(request: NextRequest) {
         title: true,
         description: true,
         completed: true,
+        dueDate: true,
         taskID: true,
       },
     }) : [];
@@ -96,22 +103,25 @@ export async function GET(request: NextRequest) {
         projectID: task.projectID,
         projectTitle: projectInfo.title,
         projectStatus: projectInfo.status,
-        subtasks: (subtasksByTaskId[task.id] || []).map((sub) => ({
-          id: sub.id,
-          title: sub.title,
-          description: sub.description,
-          completed: sub.completed,
-        })),
+      subtasks: (subtasksByTaskId[task.id] || []).map((sub) => ({
+        id: sub.id,
+        title: sub.title,
+        description: sub.description,
+        completed: sub.completed,
+        dueDate: sub.dueDate,
+      })),
       };
     });
 
     console.log(`Returning ${formattedTasks.length} formatted tasks`);
 
     return NextResponse.json(formattedTasks);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching tasks:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    console.error("Error details:", errorMessage);
     return NextResponse.json(
-      { error: "Failed to fetch tasks" },
+      { error: "Failed to fetch tasks", message: errorMessage },
       { status: 500 }
     );
   }
