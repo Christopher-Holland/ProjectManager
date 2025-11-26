@@ -23,6 +23,7 @@ async function main() {
   await prisma.subTask.deleteMany();
   await prisma.task.deleteMany();
   await prisma.project.deleteMany();
+  await prisma.note.deleteMany();
 
   // Create 6 test projects
   const projects = [
@@ -469,8 +470,40 @@ async function main() {
     console.log(`✅ Created project subtask: ${subtask.title} for project: ${createdProjects[projectIndex].title}`);
   }
 
+  // Create test notes
+  const notesData = [
+    {
+      userID: "user_test_001",
+      title: "Meeting Notes - Q4 Planning",
+      content: "Discussed upcoming Q4 goals and priorities. Key focus areas:\n- Website redesign completion\n- Mobile app launch preparation\n- Team expansion planning\n\nAction items: Schedule follow-up meeting next week.",
+      tags: "meeting, planning, q4",
+      pinned: true,
+    },
+    {
+      userID: "user_test_001",
+      title: "Project Ideas",
+      content: "Random ideas for future projects:\n1. AI-powered task prioritization\n2. Team collaboration dashboard\n3. Automated reporting system\n\nNeed to research feasibility and market demand.",
+      tags: "ideas, future, brainstorming",
+      pinned: false,
+    },
+    {
+      userID: "user_test_002",
+      title: "Quick Reference - API Endpoints",
+      content: "Common API endpoints for quick reference:\n- GET /api/projects - List all projects\n- POST /api/projects - Create new project\n- PATCH /api/projects/:id - Update project\n- DELETE /api/projects/:id - Delete project\n\nRemember to include authentication headers.",
+      tags: "api, reference, documentation",
+      pinned: false,
+    },
+  ];
+
+  for (const noteData of notesData) {
+    const note = await prisma.note.create({
+      data: noteData,
+    });
+    console.log(`✅ Created note: ${note.title} (${note.id})`);
+  }
+
   console.log("✨ Seed completed successfully!");
-  console.log(`📊 Created ${createdProjects.length} projects, ${createdTasks.length} tasks, and ${subtasksData.length + projectSubtasks.length} subtasks`);
+  console.log(`📊 Created ${createdProjects.length} projects, ${createdTasks.length} tasks, ${subtasksData.length + projectSubtasks.length} subtasks, and ${notesData.length} notes`);
 }
 
 main()

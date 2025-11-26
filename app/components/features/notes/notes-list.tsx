@@ -25,9 +25,12 @@ export default function NotesList() {
                 const response = await fetch("/api/notes");
                 if (response.ok) {
                     const data = await response.json();
+                    console.log("Notes fetched:", data);
                     setNotes(data);
                 } else {
-                    showToast("Failed to load notes", "error");
+                    const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+                    console.error("Failed to fetch notes:", response.status, errorData);
+                    showToast(`Failed to load notes: ${errorData.error || "Unknown error"}`, "error");
                 }
             } catch (error) {
                 console.error("Error fetching notes:", error);
@@ -100,7 +103,7 @@ export default function NotesList() {
     });
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex flex-col gap-4">
             {sortedNotes.length === 0 ? (
                 <div className="col-span-full text-sm text-gray-500 dark:text-gray-400 italic">
                     No notes yet. Create your first note!
