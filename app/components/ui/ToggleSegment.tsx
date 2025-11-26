@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 import { ListChecks, Target, Calendar, NotebookPen, Settings } from "lucide-react";
 
 const options = [
-    { key: "goals", label: "Goals", icon: ListChecks },
-    { key: "tasks", label: "Tasks", icon: Target },
+    { key: "goals", label: "Goals", icon: Target },
+    { key: "tasks", label: "Tasks", icon: ListChecks },
     { key: "timeline", label: "Timeline", icon: Calendar },
     { key: "notes", label: "Notes", icon: NotebookPen },
     { key: "settings", label: "Settings", icon: Settings },

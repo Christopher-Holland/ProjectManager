@@ -5,10 +5,11 @@ import { Plus } from "lucide-react";
 import ToggleSegment from "@/app/components/ui/ToggleSegment";
 import Navbar from "@/app/components/layout/navbar";
 import PageContent from "@/app/components/layout/page-content";
-import ProjectsList from "@/app/components/features/projects/projects-list";
+import ProjectsList from "@/app/components/features/goals/projects-list";
 import AddModal from "@/app/components/modals/add-modal";
 import { useToast } from "@/app/components/ui/toast";
 import TasksList from "../components/features/tasks/tasks-list";
+import TimelineList from "../components/features/timeline/timeline-list";
 
 export default function Dashboard() {
     const { showToast } = useToast();
@@ -108,7 +109,7 @@ export default function Dashboard() {
                     {view === "timeline" && (
                         <div>
                             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Timeline</h2>
-                            <div className="text-gray-900 dark:text-gray-100">Timeline content</div>
+                            <TimelineList />
                         </div>
                     )}
                     {view === "notes" && (

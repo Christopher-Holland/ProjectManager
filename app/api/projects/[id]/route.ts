@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { generateWeightedSchedule } from "@/app/components/features/timeline/timeline-generator";
 
 export async function PATCH(
   request: NextRequest,
@@ -22,7 +23,9 @@ export async function PATCH(
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description || null;
     if (priority !== undefined) updateData.priority = priority;
-    if (dueDate !== undefined) {
+    
+    const wasDueDateUpdated = dueDate !== undefined;
+    if (wasDueDateUpdated) {
       updateData.dueDate = dueDate ? new Date(dueDate) : null;
     }
     // Note: release field is not in the database schema, so it's not updated here
@@ -31,6 +34,61 @@ export async function PATCH(
       where: { id },
       data: updateData,
     });
+
+    // If due date was set or updated, generate timeline for all tasks
+    if (wasDueDateUpdated && updatedProject.dueDate) {
+      try {
+        // Fetch all tasks and their subtasks for this project
+        const tasks = await prisma.task.findMany({
+          where: { projectID: id },
+          orderBy: { createdAt: "asc" },
+          include: {
+            subTasks: {
+              orderBy: { createdAt: "asc" },
+            },
+          },
+        });
+
+        if (tasks.length > 0) {
+          // Format tasks for the timeline generator
+          const formattedTasks = tasks.map((task) => ({
+            id: task.id,
+            title: task.title,
+            subtasks: task.subTasks.map((sub) => ({
+              id: sub.id,
+              title: sub.title,
+            })),
+          }));
+
+          // Generate the weighted schedule
+          const schedule = generateWeightedSchedule(
+            formattedTasks,
+            updatedProject.dueDate.toISOString()
+          );
+
+          // Update tasks with their assigned due dates
+          const updatePromises = schedule
+            .filter((item) => item.type === "task")
+            .map((item) => {
+              const task = tasks[item.taskIndex];
+              if (task) {
+                return prisma.task.update({
+                  where: { id: task.id },
+                  data: { dueDate: item.date },
+                });
+              }
+              return null;
+            })
+            .filter((promise) => promise !== null);
+
+          await Promise.all(updatePromises);
+          console.log(`Generated timeline for ${updatePromises.length} tasks`);
+        }
+      } catch (timelineError) {
+        // Log error but don't fail the project update
+        console.error("Error generating timeline:", timelineError);
+      }
+    }
 
     return NextResponse.json(updatedProject);
   } catch (error) {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { generateWeightedSchedule } from "@/app/components/features/timeline/timeline-generator";
 
 export async function GET(
   request: NextRequest,
@@ -93,6 +94,66 @@ export async function POST(
 
     console.log(`POST /api/projects/${id}/tasks - Task created with ID:`, newTask.id);
 
+    // Check if project has a due date and regenerate timeline
+    const project = await prisma.project.findUnique({
+      where: { id },
+      select: { dueDate: true },
+    });
+
+    if (project?.dueDate) {
+      try {
+        // Fetch all tasks and their subtasks for this project
+        const allTasks = await prisma.task.findMany({
+          where: { projectID: id },
+          orderBy: { createdAt: "asc" },
+          include: {
+            subTasks: {
+              orderBy: { createdAt: "asc" },
+            },
+          },
+        });
+
+        if (allTasks.length > 0) {
+          // Format tasks for the timeline generator
+          const formattedTasks = allTasks.map((task) => ({
+            id: task.id,
+            title: task.title,
+            subtasks: task.subTasks.map((sub) => ({
+              id: sub.id,
+              title: sub.title,
+            })),
+          }));
+
+          // Generate the weighted schedule
+          const schedule = generateWeightedSchedule(
+            formattedTasks,
+            project.dueDate.toISOString()
+          );
+
+          // Update all tasks with their assigned due dates
+          const updatePromises = schedule
+            .filter((item) => item.type === "task")
+            .map((item) => {
+              const task = allTasks[item.taskIndex];
+              if (task) {
+                return prisma.task.update({
+                  where: { id: task.id },
+                  data: { dueDate: item.date },
+                });
+              }
+              return null;
+            })
+            .filter((promise) => promise !== null);
+
+          await Promise.all(updatePromises);
+          console.log(`Regenerated timeline after task creation`);
+        }
+      } catch (timelineError) {
+        // Log error but don't fail the task creation
+        console.error("Error generating timeline:", timelineError);
+      }
+    }
+
     // Fetch subtasks separately (will be empty for new tasks, but keeps format consistent)
     const subtasks = await prisma.subTask.findMany({
       where: { taskID: newTask.id },
@@ -104,12 +165,18 @@ export async function POST(
       },
     });
 
+    // Fetch the updated task with its new due date
+    const updatedTask = await prisma.task.findUnique({
+      where: { id: newTask.id },
+    });
+
     // Transform to match TaskModal format
     const formattedTask = {
-      id: newTask.id,
-      title: newTask.title,
-      description: newTask.description,
-      completed: newTask.completed,
+      id: updatedTask!.id,
+      title: updatedTask!.title,
+      description: updatedTask!.description,
+      completed: updatedTask!.completed,
+      dueDate: updatedTask!.dueDate,
       subtasks: subtasks.map((sub) => ({
         id: sub.id,
         title: sub.title,
