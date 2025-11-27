@@ -11,11 +11,13 @@ import { useToast } from "@/app/components/ui/toast";
 import TasksList from "../components/features/tasks/tasks-list";
 import TimelineList from "../components/features/timeline/timeline-list";
 import NotesList from "../components/features/notes/notes-list";
+import AddNoteModal from "../components/modals/addNote-modal";
 
 export default function Dashboard() {
     const { showToast } = useToast();
     const [view, setView] = useState("goals");
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isAddNoteModalOpen, setIsAddNoteModalOpen] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
     const [highlightedProjectId, setHighlightedProjectId] = useState<string | null>(null);
     const [tasksRefreshKey, setTasksRefreshKey] = useState(0);
@@ -48,6 +50,35 @@ export default function Dashboard() {
         } catch (error) {
             console.error("Error creating project:", error);
             showToast(`Error creating project: ${error instanceof Error ? error.message : "Unknown error"}`, "error");
+        }
+    };
+
+    const handleAddNote = async (data: {
+        title: string;
+        content?: string;
+        tags?: string;
+        pinned?: boolean;
+    }) => {
+        try {
+            const response = await fetch("/api/notes", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+                setIsAddNoteModalOpen(false);
+                // Trigger refresh of NotesList
+                setRefreshKey((prev) => prev + 1);
+                showToast("Note created successfully", "success");
+            } else {
+                const errorData = await response.json();
+                console.error("Failed to create note:", errorData);
+                showToast(`Failed to create note: ${errorData.error || "Unknown error"}`, "error");
+            }
+        } catch (error) {
+            console.error("Error creating note:", error);
+            showToast(`Error creating note: ${error instanceof Error ? error.message : "Unknown error"}`, "error");
         }
     };
 
@@ -147,6 +178,11 @@ export default function Dashboard() {
                     isOpen={isAddModalOpen}
                     onClose={() => setIsAddModalOpen(false)}
                     onSave={handleAddProject}
+                />
+                <AddNoteModal
+                    isOpen={isAddNoteModalOpen}
+                    onClose={() => setIsAddNoteModalOpen(false)}
+                    onSave={handleAddNote}
                 />
             </PageContent>
         </>
