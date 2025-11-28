@@ -125,6 +125,7 @@ export default function NoteCard({
                         <p className="text-xs text-gray-500 dark:text-gray-500">
                             Updated: {formatDate(updatedAt)}
                         </p>
+                        
 
                         {/* Action Buttons */}
                         <div className="flex items-center gap-2">

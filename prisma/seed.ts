@@ -19,16 +19,72 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log("🌱 Starting seed...");
 
+  // Get user ID from environment variable or use default test IDs
+  const actualUserID = process.env.SEED_USER_ID || "9e00fddf-e99b-4e68-b384-d49ca8fa4d52";
+  const useTestUsers = process.env.USE_TEST_USERS === "true";
+  
+  const userID1 = useTestUsers ? "user_test_001" : actualUserID;
+  const userID2 = useTestUsers ? "user_test_002" : actualUserID;
+
+  console.log(`Using user ID: ${userID1}${useTestUsers ? " (test mode)" : " (production mode)"}`);
+
   // Clear existing data (optional - comment out if you want to keep existing data)
-  await prisma.subTask.deleteMany();
-  await prisma.task.deleteMany();
-  await prisma.project.deleteMany();
-  await prisma.note.deleteMany();
+  // Only clear data for the user we're seeding, or all if using test users
+  if (useTestUsers) {
+    await prisma.subTask.deleteMany();
+    await prisma.task.deleteMany();
+    await prisma.project.deleteMany();
+    await prisma.note.deleteMany();
+    await prisma.setting.deleteMany();
+  } else {
+    // Get all projects for this user first
+    const userProjects = await prisma.project.findMany({
+      where: { userID: actualUserID },
+      select: { id: true },
+    });
+    const projectIds = userProjects.map(p => p.id);
+
+    // Delete subtasks associated with user's projects or tasks
+    if (projectIds.length > 0) {
+      await prisma.subTask.deleteMany({
+        where: {
+          OR: [
+            { projectID: { in: projectIds } },
+            { task: { projectID: { in: projectIds } } },
+          ],
+        },
+      });
+      
+      // Delete tasks associated with user's projects
+      await prisma.task.deleteMany({
+        where: {
+          projectID: { in: projectIds },
+        },
+      });
+    }
+    
+    // Delete projects, notes, and settings for the user
+    await prisma.project.deleteMany({
+      where: {
+        userID: actualUserID,
+      },
+    });
+    await prisma.note.deleteMany({
+      where: {
+        userID: actualUserID,
+      },
+    });
+    await prisma.setting.deleteMany({
+      where: {
+        userID: actualUserID,
+      },
+    });
+  }
 
   // Create 6 test projects
   const projects = [
     {
-      userID: "user_test_001",
+      userID: userID1,
       title: "Website Redesign",
       description: "Complete redesign of the company website with modern UI/UX",
       status: "active",
@@ -36,7 +92,7 @@ async function main() {
       dueDate: new Date("2024-12-31"),
     },
     {
-      userID: "user_test_001",
+      userID: userID1,
       title: "Mobile App Development",
       description: "Build a cross-platform mobile application for iOS and Android",
       status: "active",
@@ -44,7 +100,7 @@ async function main() {
       dueDate: new Date("2025-01-15"),
     },
     {
-      userID: "user_test_001",
+      userID: userID1,
       title: "Database Migration",
       description: "Migrate legacy database to new cloud infrastructure",
       status: "on_hold",
@@ -52,7 +108,7 @@ async function main() {
       dueDate: new Date("2025-02-01"),
     },
     {
-      userID: "user_test_002",
+      userID: userID2,
       title: "Marketing Campaign",
       description: "Launch new marketing campaign for Q1 product release",
       status: "active",
@@ -60,7 +116,7 @@ async function main() {
       dueDate: new Date("2024-12-20"),
     },
     {
-      userID: "user_test_002",
+      userID: userID2,
       title: "API Documentation",
       description: "Create comprehensive API documentation for developers",
       status: "active",
@@ -68,7 +124,7 @@ async function main() {
       dueDate: new Date("2025-01-10"),
     },
     {
-      userID: "user_test_001",
+      userID: userID1,
       title: "Customer Support Portal",
       description: "Build a self-service portal for customer support tickets",
       status: "completed",
@@ -473,21 +529,21 @@ async function main() {
   // Create test notes
   const notesData = [
     {
-      userID: "user_test_001",
+      userID: userID1,
       title: "Meeting Notes - Q4 Planning",
       content: "Discussed upcoming Q4 goals and priorities. Key focus areas:\n- Website redesign completion\n- Mobile app launch preparation\n- Team expansion planning\n\nAction items: Schedule follow-up meeting next week.",
       tags: "meeting, planning, q4",
       pinned: true,
     },
     {
-      userID: "user_test_001",
+      userID: userID1,
       title: "Project Ideas",
       content: "Random ideas for future projects:\n1. AI-powered task prioritization\n2. Team collaboration dashboard\n3. Automated reporting system\n\nNeed to research feasibility and market demand.",
       tags: "ideas, future, brainstorming",
       pinned: false,
     },
     {
-      userID: "user_test_002",
+      userID: userID2,
       title: "Quick Reference - API Endpoints",
       content: "Common API endpoints for quick reference:\n- GET /api/projects - List all projects\n- POST /api/projects - Create new project\n- PATCH /api/projects/:id - Update project\n- DELETE /api/projects/:id - Delete project\n\nRemember to include authentication headers.",
       tags: "api, reference, documentation",
@@ -502,8 +558,105 @@ async function main() {
     console.log(`✅ Created note: ${note.title} (${note.id})`);
   }
 
+  // Create default settings for test users
+  const settingsData = [
+    // User 1 settings
+    {
+      userID: userID1,
+      key: "theme",
+      value: "light",
+      category: "appearance",
+      description: "Application theme preference",
+    },
+    {
+      userID: userID1,
+      key: "default_priority",
+      value: "2",
+      category: "projects",
+      description: "Default priority for new projects",
+    },
+    {
+      userID: userID1,
+      key: "default_status",
+      value: "todo",
+      category: "projects",
+      description: "Default status for new projects",
+    },
+    {
+      userID: userID1,
+      key: "default_start_page",
+      value: "goals",
+      category: "app",
+      description: "Default page to show on dashboard load",
+    },
+    {
+      userID: userID1,
+      key: "default_sorting",
+      value: "updated",
+      category: "app",
+      description: "Default sorting method",
+    },
+    {
+      userID: userID1,
+      key: "default_grouping",
+      value: "none",
+      category: "app",
+      description: "Default grouping method",
+    },
+    // User 2 settings
+    {
+      userID: userID2,
+      key: "theme",
+      value: "dark",
+      category: "appearance",
+      description: "Application theme preference",
+    },
+    {
+      userID: userID2,
+      key: "default_priority",
+      value: "1",
+      category: "projects",
+      description: "Default priority for new projects",
+    },
+    {
+      userID: userID2,
+      key: "default_status",
+      value: "in_progress",
+      category: "projects",
+      description: "Default status for new projects",
+    },
+    {
+      userID: userID2,
+      key: "default_start_page",
+      value: "tasks",
+      category: "app",
+      description: "Default page to show on dashboard load",
+    },
+    {
+      userID: userID2,
+      key: "default_sorting",
+      value: "priority",
+      category: "app",
+      description: "Default sorting method",
+    },
+    {
+      userID: userID2,
+      key: "default_grouping",
+      value: "status",
+      category: "app",
+      description: "Default grouping method",
+    },
+  ];
+
+  for (const settingData of settingsData) {
+    const setting = await prisma.setting.create({
+      data: settingData,
+    });
+    console.log(`✅ Created setting: ${setting.key} for user ${setting.userID}`);
+  }
+
   console.log("✨ Seed completed successfully!");
-  console.log(`📊 Created ${createdProjects.length} projects, ${createdTasks.length} tasks, ${subtasksData.length + projectSubtasks.length} subtasks, and ${notesData.length} notes`);
+  console.log(`📊 Created ${createdProjects.length} projects, ${createdTasks.length} tasks, ${subtasksData.length + projectSubtasks.length} subtasks, ${notesData.length} notes, and ${settingsData.length} settings`);
 }
 
 main()

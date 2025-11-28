@@ -1,13 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { stackServerApp } from "@/stack/server";
 
 export async function GET(request: NextRequest) {
   try {
-    // Match the projects GET endpoint behavior - no user filtering
-    // This fetches all tasks from all projects
+    // Get user from Stack Auth using cookies
+    const cookieStore = await cookies();
+    const user = await stackServerApp.getUser(cookieStore);
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unauthorized - Please sign in" },
+        { status: 401 }
+      );
+    }
 
-    // Get all projects (matching the projects GET endpoint behavior - no user filter)
+    // Get only projects for the logged-in user
     const allProjects = await prisma.project.findMany({
+      where: {
+        userID: user.id,
+      },
       select: {
         id: true,
         title: true,

@@ -2,6 +2,7 @@
 
 import { BarChart3, Link } from "lucide-react";
 import ThemeToggle from "@/app/components/ui/theme-toggle";
+import { stackClientApp } from "@/stack/client";
 
 export const NAVBAR_HEIGHT = 72; // 4.5rem in pixels - matches CSS variable
 
@@ -19,7 +20,14 @@ export default function Navbar({ currentPath = "/dashboard" }: { currentPath?: s
 
             {/* Right side */}
             <div className="ml-auto flex items-center gap-2 pr-4">
-                <ThemeToggle />
+                <button
+                    onClick={() => {
+                        stackClientApp.signOut();
+                    }}
+                    className="border border-gray-600 dark:border-gray-300 rounded px-4 py-1 shadow-md text-gray-800 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
+                >
+                    Logout
+                </button>
             </div>
         </nav>
     );

@@ -16,31 +16,22 @@ export async function GET() {
       );
     }
 
-    const notes = await prisma.note.findMany({
+    const settings = await prisma.setting.findMany({
       where: {
         userID: user.id,
       },
-      orderBy: {
-        updatedAt: "desc",
-      },
+      orderBy: [
+        { category: "asc" },
+        { key: "asc" },
+      ],
     });
 
-    // Sort pinned notes to the top manually
-    const sortedNotes = notes.sort((a, b) => {
-      if (a.pinned && !b.pinned) return -1;
-      if (!a.pinned && b.pinned) return 1;
-      return 0;
-    });
-
-    return NextResponse.json(sortedNotes);
+    return NextResponse.json(settings);
   } catch (error) {
-    console.error("Error fetching notes:", error);
+    console.error("Error fetching settings:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorStack = error instanceof Error ? error.stack : undefined;
-    console.error("Error details:", errorMessage);
-    console.error("Error stack:", errorStack);
     return NextResponse.json(
-      { error: "Failed to fetch notes", details: errorMessage },
+      { error: "Failed to fetch settings", details: errorMessage },
       { status: 500 }
     );
   }
@@ -60,31 +51,48 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, content, tags, pinned } = body;
+    const { key, value, category, description } = body;
 
-    if (!title) {
+    if (!key || !value) {
       return NextResponse.json(
-        { error: "Title is required" },
+        { error: "Key and value are required" },
         { status: 400 }
       );
     }
 
-    const newNote = await prisma.note.create({
+    // Check if setting already exists for this user
+    const existing = await prisma.setting.findUnique({
+      where: {
+        userID_key: {
+          userID: user.id,
+          key: key,
+        },
+      },
+    });
+
+    if (existing) {
+      return NextResponse.json(
+        { error: "Setting with this key already exists" },
+        { status: 409 }
+      );
+    }
+
+    const newSetting = await prisma.setting.create({
       data: {
-        title,
-        content: content || null,
-        tags: tags || null,
-        pinned: pinned || false,
+        key,
+        value,
+        category: category || null,
+        description: description || null,
         userID: user.id,
       },
     });
 
-    return NextResponse.json(newNote, { status: 201 });
+    return NextResponse.json(newSetting, { status: 201 });
   } catch (error) {
-    console.error("Error creating note:", error);
+    console.error("Error creating setting:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: "Failed to create note", details: errorMessage },
+      { error: "Failed to create setting", details: errorMessage },
       { status: 500 }
     );
   }

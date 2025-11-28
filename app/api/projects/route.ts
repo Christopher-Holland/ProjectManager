@@ -5,7 +5,21 @@ import { stackServerApp } from "@/stack/server";
 
 export async function GET() {
   try {
+    // Get user from Stack Auth using cookies
+    const cookieStore = await cookies();
+    const user = await stackServerApp.getUser(cookieStore);
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unauthorized - Please sign in" },
+        { status: 401 }
+      );
+    }
+
     const projects = await prisma.project.findMany({
+      where: {
+        userID: user.id,
+      },
       orderBy: {
         createdAt: "desc",
       },

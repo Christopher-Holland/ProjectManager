@@ -12,12 +12,15 @@ import TasksList from "../components/features/tasks/tasks-list";
 import TimelineList from "../components/features/timeline/timeline-list";
 import NotesList from "../components/features/notes/notes-list";
 import AddNoteModal from "../components/modals/addNote-modal";
+import SettingsList from "../components/features/settings/settings-list";
+import AddSettingModal from "../components/modals/add-setting-modal";
 
 export default function Dashboard() {
     const { showToast } = useToast();
     const [view, setView] = useState("goals");
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isAddNoteModalOpen, setIsAddNoteModalOpen] = useState(false);
+    const [isAddSettingModalOpen, setIsAddSettingModalOpen] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
     const [highlightedProjectId, setHighlightedProjectId] = useState<string | null>(null);
     const [tasksRefreshKey, setTasksRefreshKey] = useState(0);
@@ -80,6 +83,35 @@ export default function Dashboard() {
         } catch (error) {
             console.error("Error creating note:", error);
             showToast(`Error creating note: ${error instanceof Error ? error.message : "Unknown error"}`, "error");
+        }
+    };
+
+    const handleAddSetting = async (data: {
+        key: string;
+        value: string;
+        category?: string;
+        description?: string;
+    }) => {
+        try {
+            const response = await fetch("/api/settings", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+                setIsAddSettingModalOpen(false);
+                // Trigger refresh of SettingsList
+                setRefreshKey((prev) => prev + 1);
+                showToast("Setting created successfully", "success");
+            } else {
+                const errorData = await response.json();
+                console.error("Failed to create setting:", errorData);
+                showToast(`Failed to create setting: ${errorData.error || "Unknown error"}`, "error");
+            }
+        } catch (error) {
+            console.error("Error creating setting:", error);
+            showToast(`Error creating setting: ${error instanceof Error ? error.message : "Unknown error"}`, "error");
         }
     };
 
@@ -170,7 +202,7 @@ export default function Dashboard() {
                     {view === "settings" && (
                         <div>
                             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Settings</h2>
-                            <div className="text-gray-900 dark:text-gray-100">Settings content</div>
+                            <SettingsList refreshKey={refreshKey} />
                         </div>
                     )}
                 </div>
@@ -184,6 +216,11 @@ export default function Dashboard() {
                     isOpen={isAddNoteModalOpen}
                     onClose={() => setIsAddNoteModalOpen(false)}
                     onSave={handleAddNote}
+                />
+                <AddSettingModal
+                    isOpen={isAddSettingModalOpen}
+                    onClose={() => setIsAddSettingModalOpen(false)}
+                    onSave={handleAddSetting}
                 />
             </PageContent>
         </>

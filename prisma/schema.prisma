@@ -73,3 +73,19 @@ model Note {
   @@index([createdAt])
   @@index([pinned])
 }
+
+model Setting {
+  id          String   @id @default(cuid())
+  userID      String
+  key         String
+  value       String
+  category    String?  // e.g., "appearance", "notifications", "general"
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userID, key])
+  @@index([userID])
+  @@index([category])
+  @@index([key])
+}
