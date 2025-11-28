@@ -14,7 +14,11 @@ interface Note {
     updatedAt: Date | string;
 }
 
-export default function NotesList() {
+interface NotesListProps {
+    refreshKey?: number;
+}
+
+export default function NotesList({ refreshKey }: NotesListProps = {}) {
     const { showToast } = useToast();
     const [notes, setNotes] = useState<Note[]>([]);
     const [loading, setLoading] = useState(true);
@@ -41,7 +45,7 @@ export default function NotesList() {
         }
 
         fetchNotes();
-    }, [showToast]);
+    }, [showToast, refreshKey]);
 
     const handleDelete = async (id: string) => {
         try {
@@ -77,11 +81,16 @@ export default function NotesList() {
             if (response.ok) {
                 const updatedNote = await response.json();
                 setNotes((prev) =>
-                    prev.map((note) => (note.id === id ? updatedNote : note))
+                    prev.map((note) => (note.id === id ? {
+                        ...note,
+                        ...updatedNote,
+                    } : note))
                 );
                 showToast("Note updated successfully", "success");
             } else {
-                showToast("Failed to update note", "error");
+                const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+                console.error("Failed to update note:", errorData);
+                showToast(`Failed to update note: ${errorData.error || "Unknown error"}`, "error");
             }
         } catch (error) {
             console.error("Error updating note:", error);

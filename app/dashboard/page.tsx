@@ -58,6 +58,7 @@ export default function Dashboard() {
         content?: string;
         tags?: string;
         pinned?: boolean;
+        projectID?: string;
     }) => {
         try {
             const response = await fetch("/api/notes", {
@@ -163,7 +164,7 @@ export default function Dashboard() {
                     {view === "notes" && (
                         <div>
                             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Notes</h2>
-                            <NotesList />
+                            <NotesList key={refreshKey} />
                         </div>
                     )}
                     {view === "settings" && (

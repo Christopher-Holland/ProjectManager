@@ -112,7 +112,7 @@ export default function AddNoteModal({
                                                    focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                                     />
                                 </div>
-
+                                    
                                 {/* Tags */}
                                 <div>
                                     <label
