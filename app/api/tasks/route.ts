@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { stackServerApp } from "@/stack/server";
+import { ErrorResponses, handleError } from "@/lib/error-handler";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,10 +11,7 @@ export async function GET(request: NextRequest) {
     const user = await stackServerApp.getUser(cookieStore);
     
     if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized - Please sign in" },
-        { status: 401 }
-      );
+      return ErrorResponses.unauthorized();
     }
 
     // Get only projects for the logged-in user
@@ -108,14 +106,8 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(formattedTasks);
-  } catch (error: any) {
-    console.error("Error fetching tasks:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-    console.error("Error details:", errorMessage);
-    return NextResponse.json(
-      { error: "Failed to fetch tasks", message: errorMessage },
-      { status: 500 }
-    );
+  } catch (error) {
+    return handleError(error, "Failed to fetch tasks");
   }
 }
 

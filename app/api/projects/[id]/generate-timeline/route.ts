@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateWeightedSchedule } from "@/app/components/features/timeline/timeline-generator";
 import { idParamSchema, validateParams } from "@/lib/validation";
+import { ErrorResponses, handleError } from "@/lib/error-handler";
 
 export async function POST(
   request: NextRequest,
@@ -24,17 +25,11 @@ export async function POST(
     });
 
     if (!project) {
-      return NextResponse.json(
-        { error: "Project not found" },
-        { status: 404 }
-      );
+      return ErrorResponses.notFound("Project");
     }
 
     if (!project.dueDate) {
-      return NextResponse.json(
-        { error: "Project does not have a due date set" },
-        { status: 400 }
-      );
+      return ErrorResponses.badRequest("Project does not have a due date set");
     }
 
     // Fetch all tasks and their subtasks for this project
@@ -106,11 +101,7 @@ export async function POST(
       tasksUpdated: updatePromises.length,
     });
   } catch (error) {
-    console.error("Error generating timeline:", error);
-    return NextResponse.json(
-      { error: "Failed to generate timeline" },
-      { status: 500 }
-    );
+    return handleError(error, "Failed to generate timeline");
   }
 }
 

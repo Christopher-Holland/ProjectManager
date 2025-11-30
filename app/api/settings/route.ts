@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { stackServerApp } from "@/stack/server";
 import { createSettingSchema, validateRequest } from "@/lib/validation";
+import { ErrorResponses, handleError } from "@/lib/error-handler";
 
 export async function GET() {
   try {
@@ -11,10 +12,7 @@ export async function GET() {
     const user = await stackServerApp.getUser(cookieStore);
     
     if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized - Please sign in" },
-        { status: 401 }
-      );
+      return ErrorResponses.unauthorized();
     }
 
     const settings = await prisma.setting.findMany({
@@ -29,12 +27,7 @@ export async function GET() {
 
     return NextResponse.json(settings);
   } catch (error) {
-    console.error("Error fetching settings:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return NextResponse.json(
-      { error: "Failed to fetch settings", details: errorMessage },
-      { status: 500 }
-    );
+    return handleError(error, "Failed to fetch settings");
   }
 }
 
@@ -45,10 +38,7 @@ export async function POST(request: NextRequest) {
     const user = await stackServerApp.getUser(cookieStore);
     
     if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized - Please sign in" },
-        { status: 401 }
-      );
+      return ErrorResponses.unauthorized();
     }
 
     const body = await request.json();
@@ -72,10 +62,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existing) {
-      return NextResponse.json(
-        { error: "Setting with this key already exists" },
-        { status: 409 }
-      );
+      return ErrorResponses.conflict("Setting with this key already exists");
     }
 
     const newSetting = await prisma.setting.create({
@@ -90,12 +77,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(newSetting, { status: 201 });
   } catch (error) {
-    console.error("Error creating setting:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return NextResponse.json(
-      { error: "Failed to create setting", details: errorMessage },
-      { status: 500 }
-    );
+    return handleError(error, "Failed to create setting");
   }
 }
 

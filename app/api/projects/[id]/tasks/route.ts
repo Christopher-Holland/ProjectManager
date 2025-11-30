@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateWeightedSchedule } from "@/app/components/features/timeline/timeline-generator";
 import { idParamSchema, validateParams, createTaskSchema, validateRequest } from "@/lib/validation";
+import { ErrorResponses, handleError } from "@/lib/error-handler";
 
 export async function GET(
   request: NextRequest,
@@ -64,11 +65,7 @@ export async function GET(
 
     return NextResponse.json(formattedTasks);
   } catch (error) {
-    console.error("Error fetching tasks:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch tasks" },
-      { status: 500 }
-    );
+    return handleError(error, "Failed to fetch tasks");
   }
 }
 
@@ -214,22 +211,8 @@ export async function POST(
     };
 
     return NextResponse.json(formattedTask, { status: 201 });
-  } catch (error: any) {
-    console.error("Error creating task:", error);
-    
-    // Handle Prisma foreign key constraint errors
-    if (error?.code === 'P2003') {
-      return NextResponse.json(
-        { error: "Project not found", message: "The specified project does not exist" },
-        { status: 404 }
-      );
-    }
-    
-    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-    return NextResponse.json(
-      { error: "Failed to create task", message: errorMessage },
-      { status: 500 }
-    );
+  } catch (error) {
+    return handleError(error, "Failed to create task");
   }
 }
 

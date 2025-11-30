@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { stackServerApp } from "@/stack/server";
 import { updatePasswordSchema, validateRequest } from "@/lib/validation";
+import { ErrorResponses, handleError, createErrorResponse, HttpStatus } from "@/lib/error-handler";
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -9,10 +10,7 @@ export async function PATCH(request: NextRequest) {
     const user = await stackServerApp.getUser(cookieStore);
     
     if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized - Please sign in" },
-        { status: 401 }
-      );
+      return ErrorResponses.unauthorized();
     }
 
     const body = await request.json();
@@ -29,9 +27,10 @@ export async function PATCH(request: NextRequest) {
     // We need to call Stack Auth's API directly with the API key
     const stackApiKey = process.env.STACK_SECRET_SERVER_KEY;
     if (!stackApiKey) {
-      return NextResponse.json(
-        { error: "Stack Auth API key not configured. Please set STACK_SECRET_SERVER_KEY in your .env file." },
-        { status: 500 }
+      return createErrorResponse(
+        "Stack Auth API key not configured",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        { message: "Please set STACK_SECRET_SERVER_KEY in your .env file." }
       );
     }
 
@@ -51,9 +50,9 @@ export async function PATCH(request: NextRequest) {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        return NextResponse.json(
-          { error: errorData.error || 'Failed to update password' },
-          { status: response.status }
+        return createErrorResponse(
+          errorData.error || 'Failed to update password',
+          response.status
         );
       }
 
@@ -62,20 +61,10 @@ export async function PATCH(request: NextRequest) {
         message: "Password updated successfully",
       });
     } catch (updateError) {
-      console.error("Password update error:", updateError);
-      const errorMessage = updateError instanceof Error ? updateError.message : 'Unknown error';
-      return NextResponse.json(
-        { error: `Failed to update password: ${errorMessage}` },
-        { status: 500 }
-      );
+      return handleError(updateError, "Failed to update password");
     }
   } catch (error) {
-    console.error("Error updating password:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return NextResponse.json(
-      { error: "Failed to update password", details: errorMessage },
-      { status: 500 }
-    );
+    return handleError(error, "Failed to update password");
   }
 }
 

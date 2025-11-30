@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { stackServerApp } from "@/stack/server";
 import { updateSettingSchema, validateRequest, idParamSchema, validateParams } from "@/lib/validation";
+import { ErrorResponses, handleError } from "@/lib/error-handler";
 
 export async function PATCH(
   request: NextRequest,
@@ -22,10 +23,7 @@ export async function PATCH(
     const user = await stackServerApp.getUser(cookieStore);
     
     if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized - Please sign in" },
-        { status: 401 }
-      );
+      return ErrorResponses.unauthorized();
     }
 
     const body = await request.json();
@@ -52,17 +50,11 @@ export async function PATCH(
     });
 
     if (!existingSetting) {
-      return NextResponse.json(
-        { error: "Setting not found" },
-        { status: 404 }
-      );
+      return ErrorResponses.notFound("Setting");
     }
 
     if (existingSetting.userID !== user.id) {
-      return NextResponse.json(
-        { error: "Unauthorized - Setting does not belong to user" },
-        { status: 403 }
-      );
+      return ErrorResponses.forbidden("Setting does not belong to user");
     }
 
     // If key is being updated, check for conflicts
@@ -77,10 +69,7 @@ export async function PATCH(
       });
 
       if (keyExists) {
-        return NextResponse.json(
-          { error: "Setting with this key already exists" },
-          { status: 409 }
-        );
+        return ErrorResponses.conflict("Setting with this key already exists");
       }
     }
 
@@ -91,10 +80,7 @@ export async function PATCH(
 
     // Only update if there's data to update
     if (Object.keys(updateData).length === 0) {
-      return NextResponse.json(
-        { error: "No data provided to update" },
-        { status: 400 }
-      );
+      return ErrorResponses.badRequest("No data provided to update");
     }
 
     const updatedSetting = await prisma.setting.update({
@@ -104,12 +90,7 @@ export async function PATCH(
 
     return NextResponse.json(updatedSetting);
   } catch (error) {
-    console.error("Error updating setting:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return NextResponse.json(
-      { error: "Failed to update setting", details: errorMessage },
-      { status: 500 }
-    );
+    return handleError(error, "Failed to update setting");
   }
 }
 
@@ -130,10 +111,7 @@ export async function DELETE(
     const user = await stackServerApp.getUser(cookieStore);
     
     if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized - Please sign in" },
-        { status: 401 }
-      );
+      return ErrorResponses.unauthorized();
     }
 
     // Check if setting exists and belongs to user
@@ -143,17 +121,11 @@ export async function DELETE(
     });
 
     if (!existingSetting) {
-      return NextResponse.json(
-        { error: "Setting not found" },
-        { status: 404 }
-      );
+      return ErrorResponses.notFound("Setting");
     }
 
     if (existingSetting.userID !== user.id) {
-      return NextResponse.json(
-        { error: "Unauthorized - Setting does not belong to user" },
-        { status: 403 }
-      );
+      return ErrorResponses.forbidden("Setting does not belong to user");
     }
 
     await prisma.setting.delete({
@@ -162,12 +134,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting setting:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return NextResponse.json(
-      { error: "Failed to delete setting", details: errorMessage },
-      { status: 500 }
-    );
+    return handleError(error, "Failed to delete setting");
   }
 }
 

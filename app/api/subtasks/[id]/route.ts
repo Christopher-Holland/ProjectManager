@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateWeightedSchedule } from "@/app/components/features/timeline/timeline-generator";
 import { updateSubtaskSchema, validateRequest, idParamSchema, validateParams } from "@/lib/validation";
+import { handleError } from "@/lib/error-handler";
 
 export async function PATCH(
   request: NextRequest,
@@ -44,11 +45,7 @@ export async function PATCH(
 
     return NextResponse.json(updatedSubtask);
   } catch (error) {
-    console.error("Error updating subtask:", error);
-    return NextResponse.json(
-      { error: "Failed to update subtask" },
-      { status: 500 }
-    );
+    return handleError(error, "Failed to update subtask");
   }
 }
 
@@ -152,11 +149,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting subtask:", error);
-    return NextResponse.json(
-      { error: "Failed to delete subtask" },
-      { status: 500 }
-    );
+    return handleError(error, "Failed to delete subtask");
   }
 }
 

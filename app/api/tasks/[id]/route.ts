@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { updateTaskSchema, validateRequest, idParamSchema, validateParams } from "@/lib/validation";
+import { ErrorResponses, handleError } from "@/lib/error-handler";
 
 export async function PATCH(
   request: NextRequest,
@@ -47,10 +48,7 @@ export async function PATCH(
       });
 
       if (!existingTask) {
-        return NextResponse.json(
-          { error: "Task not found" },
-          { status: 404 }
-        );
+        return ErrorResponses.notFound("Task");
       }
 
       // Fetch project and subtasks separately
@@ -142,22 +140,8 @@ export async function PATCH(
     };
 
     return NextResponse.json(formattedTask);
-  } catch (error: any) {
-    console.error("Error updating task:", error);
-    
-    // Handle Prisma not found error
-    if (error?.code === 'P2025') {
-      return NextResponse.json(
-        { error: "Task not found" },
-        { status: 404 }
-      );
-    }
-    
-    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-    return NextResponse.json(
-      { error: "Failed to update task", message: errorMessage },
-      { status: 500 }
-    );
+  } catch (error) {
+    return handleError(error, "Failed to update task");
   }
 }
 
@@ -181,22 +165,8 @@ export async function DELETE(
     });
 
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error: any) {
-    console.error("Error deleting task:", error);
-    
-    // Handle Prisma not found error
-    if (error?.code === 'P2025') {
-      return NextResponse.json(
-        { error: "Task not found" },
-        { status: 404 }
-      );
-    }
-    
-    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-    return NextResponse.json(
-      { error: "Failed to delete task", message: errorMessage },
-      { status: 500 }
-    );
+  } catch (error) {
+    return handleError(error, "Failed to delete task");
   }
 }
 

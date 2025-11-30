@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { stackServerApp } from "@/stack/server";
 import { updateNoteSchema, validateRequest, idParamSchema, validateParams } from "@/lib/validation";
+import { ErrorResponses, handleError } from "@/lib/error-handler";
 
 export async function PATCH(
   request: NextRequest,
@@ -50,18 +51,12 @@ export async function PATCH(
     });
 
     if (!existingNote) {
-      return NextResponse.json(
-        { error: "Note not found" },
-        { status: 404 }
-      );
+      return ErrorResponses.notFound("Note");
     }
 
     // Only update if there's data to update
     if (Object.keys(updateData).length === 0) {
-      return NextResponse.json(
-        { error: "No data provided to update" },
-        { status: 400 }
-      );
+      return ErrorResponses.badRequest("No data provided to update");
     }
 
     const updatedNote = await prisma.note.update({
@@ -71,12 +66,7 @@ export async function PATCH(
 
     return NextResponse.json(updatedNote);
   } catch (error) {
-    console.error("Error updating note:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return NextResponse.json(
-      { error: "Failed to update note", details: errorMessage },
-      { status: 500 }
-    );
+    return handleError(error, "Failed to update note");
   }
 }
 
@@ -103,12 +93,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting note:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return NextResponse.json(
-      { error: "Failed to delete note", details: errorMessage },
-      { status: 500 }
-    );
+    return handleError(error, "Failed to delete note");
   }
 }
 

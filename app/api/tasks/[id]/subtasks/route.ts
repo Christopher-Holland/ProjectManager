@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateWeightedSchedule } from "@/app/components/features/timeline/timeline-generator";
 import { idParamSchema, validateParams, createSubtaskSchema, validateRequest } from "@/lib/validation";
+import { ErrorResponses, handleError } from "@/lib/error-handler";
 
 export async function POST(
   request: NextRequest,
@@ -34,10 +35,7 @@ export async function POST(
     });
 
     if (!task) {
-      return NextResponse.json(
-        { error: "Task not found" },
-        { status: 404 }
-      );
+      return ErrorResponses.notFound("Task");
     }
 
     const newSubtask = await prisma.subTask.create({
@@ -124,11 +122,7 @@ export async function POST(
 
     return NextResponse.json(newSubtask, { status: 201 });
   } catch (error) {
-    console.error("Error creating subtask:", error);
-    return NextResponse.json(
-      { error: "Failed to create subtask" },
-      { status: 500 }
-    );
+    return handleError(error, "Failed to create subtask");
   }
 }
 
