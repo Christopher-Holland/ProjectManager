@@ -32,17 +32,12 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    console.log(`Total projects in DB: ${allProjects.length}`);
-    
     // Create project map for all projects (including status)
     const projectMap = new Map(allProjects.map((p) => [p.id, { title: p.title, status: p.status }]));
     const allProjectIds = allProjects.map((p) => p.id);
 
-    console.log(`All project IDs: ${allProjectIds.join(", ")}`);
-
     // If no projects, return empty array
     if (allProjectIds.length === 0) {
-      console.log("No projects found, returning empty tasks array");
       return NextResponse.json([]);
     }
 
@@ -58,20 +53,6 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    console.log(`Found ${tasks.length} tasks across ${allProjectIds.length} projects`);
-    
-    // Log task distribution by project
-    const tasksByProject = tasks.reduce((acc, task) => {
-      acc[task.projectID] = (acc[task.projectID] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    console.log("Tasks by project:", JSON.stringify(tasksByProject, null, 2));
-    
-    if (tasks.length === 0) {
-      console.log("WARNING: No tasks found in database!");
-    }
-
-    console.log(`Found ${tasks.length} tasks across all projects`);
 
     // Get all task IDs to fetch subtasks
     const taskIds = tasks.map((t) => t.id);
@@ -125,8 +106,6 @@ export async function GET(request: NextRequest) {
       })),
       };
     });
-
-    console.log(`Returning ${formattedTasks.length} formatted tasks`);
 
     return NextResponse.json(formattedTasks);
   } catch (error: any) {

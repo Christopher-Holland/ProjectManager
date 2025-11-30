@@ -7,9 +7,7 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    console.log(`PATCH /api/tasks/${id} - Received request`);
     const body = await request.json();
-    console.log(`PATCH /api/tasks/${id} - Request body:`, body);
     const { completed, title, description, status, priority } = body;
 
     const updateData: { 
@@ -88,15 +86,11 @@ export async function PATCH(
       });
     }
 
-    console.log(`PATCH /api/tasks/${id} - Updating with data:`, updateData);
-    
     // Update task without include to avoid transaction issues
     const updatedTask = await prisma.task.update({
       where: { id },
       data: updateData,
     });
-
-    console.log(`PATCH /api/tasks/${id} - Task updated successfully`);
 
     // Fetch project and subtasks separately to avoid transaction issues
     const [project, subtasks] = await Promise.all([
@@ -139,7 +133,6 @@ export async function PATCH(
       })),
     };
 
-    console.log(`PATCH /api/tasks/${id} - Returning formatted task:`, formattedTask);
     return NextResponse.json(formattedTask);
   } catch (error: any) {
     console.error("Error updating task:", error);
@@ -166,14 +159,12 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    console.log(`DELETE /api/tasks/${id} - Deleting task`);
 
     // Delete the task (subtasks will be deleted automatically due to cascade)
     await prisma.task.delete({
       where: { id },
     });
 
-    console.log(`DELETE /api/tasks/${id} - Task deleted successfully`);
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error: any) {
     console.error("Error deleting task:", error);

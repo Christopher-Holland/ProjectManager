@@ -106,7 +106,6 @@ export async function POST(
           });
 
           await Promise.all(updatePromises);
-          console.log(`Regenerated timeline after subtask creation`);
         }
       }
     } catch (timelineError) {

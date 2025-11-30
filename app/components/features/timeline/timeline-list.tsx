@@ -39,7 +39,6 @@ export default function TimelineList() {
                     throw new Error(`Failed to fetch tasks: ${tasksResponse.status} ${errorText}`);
                 }
                 const tasks = await tasksResponse.json();
-                console.log("Fetched tasks:", tasks.length);
 
                 // Build timeline items array
                 const timelineItems: TimelineItem[] = [];

@@ -49,7 +49,6 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    console.log("Request body:", body);
     const { title, description, dueDate, priority, status } = body;
 
     if (!title) {

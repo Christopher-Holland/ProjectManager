@@ -95,7 +95,6 @@ export async function PATCH(
           });
 
           await Promise.all(updatePromises);
-          console.log(`Generated timeline for ${updatePromises.length} items (tasks and subtasks)`);
         }
       } catch (timelineError) {
         // Log error but don't fail the project update

@@ -80,8 +80,6 @@ export async function POST(
       );
     }
 
-    console.log(`POST /api/projects/${id}/tasks - Creating task with title:`, title);
-    
     // Create task without include to avoid transaction issues
     const newTask = await prisma.task.create({
       data: {
@@ -93,8 +91,6 @@ export async function POST(
         completed: false,
       },
     });
-
-    console.log(`POST /api/projects/${id}/tasks - Task created with ID:`, newTask.id);
 
     // Check if project has a due date and regenerate timeline
     const project = await prisma.project.findUnique({
@@ -161,7 +157,6 @@ export async function POST(
           });
 
           await Promise.all(updatePromises);
-          console.log(`Regenerated timeline after task creation`);
         }
       } catch (timelineError) {
         // Log error but don't fail the task creation
@@ -202,7 +197,6 @@ export async function POST(
       })),
     };
 
-    console.log(`POST /api/projects/${id}/tasks - Returning formatted task:`, formattedTask);
     return NextResponse.json(formattedTask, { status: 201 });
   } catch (error: any) {
     console.error("Error creating task:", error);

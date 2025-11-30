@@ -105,10 +105,6 @@ export default function TaskModal({
             subtasks: subtasksToSave,
         };
 
-        console.log("editTask-modal - Calling onSave with data:", saveData);
-        console.log("editTask-modal - initialTask:", initialTask);
-        console.log("editTask-modal - taskId:", initialTask?.id);
-
         await onSave(saveData);
     };
 
@@ -150,10 +146,10 @@ export default function TaskModal({
                                         name="title"
                                         defaultValue={initialTask?.title || ""}
                                         className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                                        placeholder="Enter task title"
+                            placeholder="Enter task title"
                                         required
-                                    />
-                                </div>
+                        />
+                    </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -164,7 +160,7 @@ export default function TaskModal({
                                         rows={4}
                                         defaultValue={initialTask?.description || ""}
                                         className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                                        placeholder="Optional description"
+                            placeholder="Optional description"
                                     />
                                 </div>
 
@@ -260,8 +256,8 @@ export default function TaskModal({
                                         >
                                             <Plus size={16} />
                                         </button>
-                                    </div>
-                                </div>
+                    </div>
+                </div>
 
                                 <div className="flex justify-end gap-3 pt-4">
                                     {isEditMode && onDelete && initialTask?.id && (
@@ -278,7 +274,7 @@ export default function TaskModal({
                                         onClick={onClose}
                                         className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                                     >
-                                        Cancel
+                        Cancel
                                     </button>
 
                                     <button

@@ -30,7 +30,6 @@ export default function SettingsList({ refreshKey }: SettingsListProps = {}) {
                 const response = await fetch("/api/settings");
                 if (response.ok) {
                     const data = await response.json();
-                    console.log("Settings loaded from database:", data);
                     setSettings(data);
                     
                     // Apply theme from database if it exists
@@ -74,13 +73,11 @@ export default function SettingsList({ refreshKey }: SettingsListProps = {}) {
 
                 if (response.ok) {
                     const updated = await response.json();
-                    console.log("Setting updated successfully:", updated);
                     setSettings(prev => prev.map(s => s.id === existing.id ? updated : s));
                     // Re-fetch settings to ensure we have the latest from the database
                     const refreshResponse = await fetch("/api/settings");
                     if (refreshResponse.ok) {
                         const refreshed = await refreshResponse.json();
-                        console.log("Settings refreshed after update:", refreshed);
                         setSettings(refreshed);
                     }
                     return true;
@@ -99,13 +96,11 @@ export default function SettingsList({ refreshKey }: SettingsListProps = {}) {
 
                 if (response.ok) {
                     const newSetting = await response.json();
-                    console.log("Setting created successfully:", newSetting);
                     setSettings(prev => [...prev, newSetting]);
                     // Re-fetch settings to ensure we have the latest from the database
                     const refreshResponse = await fetch("/api/settings");
                     if (refreshResponse.ok) {
                         const refreshed = await refreshResponse.json();
-                        console.log("Settings refreshed after create:", refreshed);
                         setSettings(refreshed);
                     }
                     return true;
@@ -182,8 +177,7 @@ export default function SettingsList({ refreshKey }: SettingsListProps = {}) {
                     type="profile"
                     profileData={profileSettings}
                     onUpdate={async (key, value) => {
-                        // Profile updates would go through Stack Auth API
-                        console.log("Profile update:", key, value);
+                        // Profile updates handled in SettingsCard component
                     }}
                 />
             </div>
@@ -218,8 +212,7 @@ export default function SettingsList({ refreshKey }: SettingsListProps = {}) {
                     updatedAt={new Date()}
                     type="security"
                     onUpdate={async (key, value) => {
-                        // Security updates would go through Stack Auth API
-                        console.log("Security update:", key, value);
+                        // Security updates handled in SettingsCard component
                     }}
                 />
             </div>

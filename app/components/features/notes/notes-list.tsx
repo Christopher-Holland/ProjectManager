@@ -29,7 +29,6 @@ export default function NotesList({ refreshKey }: NotesListProps = {}) {
                 const response = await fetch("/api/notes");
                 if (response.ok) {
                     const data = await response.json();
-                    console.log("Notes fetched:", data);
                     setNotes(data);
                 } else {
                     const errorData = await response.json().catch(() => ({ error: "Unknown error" }));

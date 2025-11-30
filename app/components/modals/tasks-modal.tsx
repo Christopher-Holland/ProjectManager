@@ -119,7 +119,6 @@ export default function TaskModal({
         subtasks?: Array<{ id?: string; title: string; description?: string; action: 'create' | 'update' | 'delete' }>;
     }) => {
         try {
-            console.log("handleSaveTask called with data:", data);
             let savedTaskId: string;
 
             if (data.taskId) {
@@ -135,19 +134,14 @@ export default function TaskModal({
                     title: data.title,
                     description: data.description,
                 };
-                console.log(`Updating task ${data.taskId} with payload:`, updatePayload);
                 
                 const url = `/api/tasks/${data.taskId}`;
-                console.log(`Making PATCH request to: ${url}`);
                 
                 const response = await fetch(url, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(updatePayload),
                 });
-                
-                console.log("Update task response status:", response.status, response.statusText);
-                console.log("Update task response headers:", Object.fromEntries(response.headers.entries()));
 
                 if (response.ok) {
                     const updatedTask = await response.json();
@@ -185,18 +179,14 @@ export default function TaskModal({
                     title: data.title,
                     description: data.description,
                 };
-                console.log(`Creating new task for project ${projectId} with payload:`, createPayload);
                 
                 const url = `/api/projects/${projectId}/tasks`;
-                console.log(`Making POST request to: ${url}`);
                 
                 const response = await fetch(url, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(createPayload),
                 });
-                
-                console.log("Create task response status:", response.status, response.statusText);
 
                 if (response.ok) {
                     const newTask = await response.json();
@@ -237,8 +227,6 @@ export default function TaskModal({
                             });
                             if (!deleteResponse.ok) {
                                 console.error("Failed to delete subtask:", subtask.id);
-                            } else {
-                                console.log("Successfully deleted subtask:", subtask.id);
                             }
                         } catch (error) {
                             console.error("Error deleting subtask:", error);
@@ -284,11 +272,9 @@ export default function TaskModal({
             }
 
             // Refresh tasks to get updated subtasks (including deletions)
-            console.log("Refreshing tasks list after save...");
             const refreshResponse = await fetch(`/api/projects/${projectId}/tasks`);
             if (refreshResponse.ok) {
                 const refreshedTasks = await refreshResponse.json();
-                console.log("Refreshed tasks:", refreshedTasks);
                 setTasks(refreshedTasks);
                 
                 // Update editingTask if it was the one being edited, so it has the latest data
@@ -341,13 +327,11 @@ export default function TaskModal({
 
     const handleDeleteTask = async (taskId: string) => {
         try {
-            console.log(`Deleting task ${taskId}`);
             const response = await fetch(`/api/tasks/${taskId}`, {
                 method: "DELETE",
             });
 
             if (response.ok) {
-                console.log(`Task ${taskId} deleted successfully`);
                 // Remove the task from the list
                 setTasks((prev) => prev.filter((task) => task.id !== taskId));
                 // Close the edit modal if it's open for this task

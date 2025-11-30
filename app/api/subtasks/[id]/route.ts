@@ -119,7 +119,6 @@ export async function DELETE(
             });
 
             await Promise.all(updatePromises);
-            console.log(`Regenerated timeline after subtask deletion`);
           }
         }
       } catch (timelineError) {

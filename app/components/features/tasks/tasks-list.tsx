@@ -17,17 +17,9 @@ export default function TasksList({ onNavigateToProject, refreshTrigger }: Tasks
 
   const fetchTasks = async () => {
     try {
-      console.log("Fetching tasks from /api/tasks...");
       const response = await fetch("/api/tasks");
       if (response.ok) {
         const data = await response.json();
-        console.log(`Received ${data.length} tasks from API`);
-        console.log("Tasks data:", data);
-        
-        // Log unique project IDs
-        const uniqueProjectIds = [...new Set(data.map((t: any) => t.projectID))];
-        console.log(`Tasks from ${uniqueProjectIds.length} unique projects:`, uniqueProjectIds);
-        
         setTasks(data);
       } else {
         const errorText = await response.text();
