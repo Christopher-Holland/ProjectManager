@@ -23,7 +23,17 @@ export async function GET(request: NextRequest) {
     });
 
     // Sort pinned notes to the top manually
-    const sortedNotes = notes.sort((a: typeof notes[0], b: typeof notes[0]) => {
+    type NoteType = {
+      id: string;
+      title: string;
+      content: string | null;
+      tags: string | null;
+      pinned: boolean;
+      userID: string;
+      createdAt: Date;
+      updatedAt: Date;
+    };
+    const sortedNotes = notes.sort((a: NoteType, b: NoteType) => {
       if (a.pinned && !b.pinned) return -1;
       if (!a.pinned && b.pinned) return 1;
       return 0;
