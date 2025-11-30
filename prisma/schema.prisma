@@ -79,7 +79,7 @@ model Setting {
   userID      String
   key         String
   value       String
-  category    String?  // e.g., "appearance", "notifications", "general"
+  category    String? // e.g., "appearance", "notifications", "general"
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
