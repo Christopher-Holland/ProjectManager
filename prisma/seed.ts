@@ -13,7 +13,7 @@ if (!databaseUrl) {
 }
 
 // Use HTTP adapter for Neon (better for serverless/edge environments)
-const adapter = new PrismaNeonHttp(databaseUrl);
+const adapter = new PrismaNeonHttp(databaseUrl, {});
 const prisma = new PrismaClient({ adapter });
 
 async function main() {

@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { stackServerApp } from "@/stack/server";
 import { updatePasswordSchema, validateRequest } from "@/lib/validation";
 import { ErrorResponses, handleError, createErrorResponse, HttpStatus } from "@/lib/error-handler";
 
 export async function PATCH(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const user = await stackServerApp.getUser(cookieStore);
+    const user = await stackServerApp.getUser();
     
     if (!user) {
       return ErrorResponses.unauthorized();

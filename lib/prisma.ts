@@ -7,7 +7,7 @@ if (!databaseUrl) {
 }
 
 // Use HTTP adapter for Neon (better for serverless/edge environments)
-const adapter = new PrismaNeonHttp(databaseUrl);
+const adapter = new PrismaNeonHttp(databaseUrl, {});
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;

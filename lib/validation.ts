@@ -111,7 +111,7 @@ export function validateRequest<T>(
     return { success: true, data: validated };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const errors = error.errors.map((err) => ({
+      const errors = error.issues.map((err) => ({
         field: err.path.join("."),
         message: err.message,
       }));

@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { stackServerApp } from "@/stack/server";
 import { ErrorResponses, handleError } from "@/lib/error-handler";
 
 export async function GET(request: NextRequest) {
   try {
-    // Get user from Stack Auth using cookies
-    const cookieStore = await cookies();
-    const user = await stackServerApp.getUser(cookieStore);
+    // Get user from Stack Auth - automatically reads from Next.js cookies
+    const user = await stackServerApp.getUser();
     
     if (!user) {
       return ErrorResponses.unauthorized();

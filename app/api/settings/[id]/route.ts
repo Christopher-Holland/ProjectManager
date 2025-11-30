@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { stackServerApp } from "@/stack/server";
 import { updateSettingSchema, validateRequest, idParamSchema, validateParams } from "@/lib/validation";
@@ -19,8 +18,7 @@ export async function PATCH(
     }
     const { id } = paramValidation.data;
     
-    const cookieStore = await cookies();
-    const user = await stackServerApp.getUser(cookieStore);
+    const user = await stackServerApp.getUser();
     
     if (!user) {
       return ErrorResponses.unauthorized();
@@ -107,8 +105,7 @@ export async function DELETE(
       return paramValidation.response;
     }
     const { id } = paramValidation.data;
-    const cookieStore = await cookies();
-    const user = await stackServerApp.getUser(cookieStore);
+    const user = await stackServerApp.getUser();
     
     if (!user) {
       return ErrorResponses.unauthorized();

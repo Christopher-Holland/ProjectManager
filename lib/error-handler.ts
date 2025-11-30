@@ -50,10 +50,10 @@ export function createErrorResponse(
   
   const response: ErrorResponse = {
     error,
-    ...(options?.message && { message: options.message }),
-    ...(options?.code && { code: options.code }),
+    ...(options?.message ? { message: options.message } : {}),
+    ...(options?.code ? { code: options.code } : {}),
     // Only include details in development to avoid leaking sensitive info
-    ...(isDevelopment && options?.details && { details: options.details }),
+    ...(isDevelopment && options?.details ? { details: options.details } : {}),
   };
 
   return NextResponse.json(response, { status });
