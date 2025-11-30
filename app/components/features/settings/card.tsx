@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Moon, Sun, Monitor, Pencil, Save, X, Lock, Key, User, Mail } from "lucide-react";
 import { useTheme } from "@/app/components/ui/theme-provider";
 import { useToast } from "@/app/components/ui/toast";
+import { useUser } from "@stackframe/stack";
 
 interface SettingsCardProps {
     id: string;
@@ -46,6 +47,7 @@ export default function SettingsCard({
 }: SettingsCardProps) {
     const { theme, toggleTheme, setTheme } = useTheme();
     const { showToast } = useToast();
+    const user = useUser({ or: "redirect" });
     const [isEditing, setIsEditing] = useState(false);
     const [editValues, setEditValues] = useState<Record<string, string>>({});
 
@@ -86,18 +88,50 @@ export default function SettingsCard({
                     await onUpdate("default_grouping", editValues.defaultGrouping);
                 }
             } else if (type === "profile" && profileData) {
-                // Profile updates would go through Stack Auth
-                if (editValues.username) {
-                    await onUpdate("username", editValues.username);
+                // Profile updates go through Stack Auth client-side API
+                if (user) {
+                    try {
+                        const updateData: { displayName?: string; primaryEmail?: string } = {};
+                        
+                        if (editValues.username && editValues.username !== profileData.username) {
+                            updateData.displayName = editValues.username;
+                        }
+                        
+                        if (editValues.email && editValues.email !== profileData.email) {
+                            updateData.primaryEmail = editValues.email;
+                        }
+                        
+                        if (Object.keys(updateData).length > 0) {
+                            await user.update(updateData);
+                            showToast("Profile updated successfully", "success");
+                            setIsEditing(false);
+                            setEditValues({});
+                            // Trigger a page refresh to get updated user data
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        } else {
+                            showToast("No changes to save", "info");
+                            setIsEditing(false);
+                            setEditValues({});
+                        }
+                    } catch (error) {
+                        console.error("Error updating profile:", error);
+                        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+                        showToast(`Failed to update profile: ${errorMessage}`, "error");
+                    }
                 }
-                showToast("Profile updates require authentication API", "info");
             } else if (type === "security") {
-                // Security updates would go through Stack Auth
-                showToast("Security updates require authentication API", "info");
+                // Security updates would go through Stack Auth API
+                // Password changes require a modal with current password and new password
+                showToast("Password change feature coming soon", "info");
             }
-            setIsEditing(false);
-            setEditValues({});
-            showToast("Settings saved successfully", "success");
+            // Only show success and reset if it wasn't a profile update (profile updates reload the page)
+            if (type !== "profile") {
+                setIsEditing(false);
+                setEditValues({});
+                showToast("Settings saved successfully", "success");
+            }
         } catch (error) {
             console.error("Error saving settings:", error);
             showToast("Failed to save settings", "error");
@@ -163,7 +197,16 @@ export default function SettingsCard({
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Email
                         </label>
-                        <p className="text-gray-900 dark:text-gray-100">{profileData.email}</p>
+                        {isEditing ? (
+                            <input
+                                type="email"
+                                value={editValues.email || profileData.email}
+                                onChange={(e) => setEditValues({ ...editValues, email: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                            />
+                        ) : (
+                            <p className="text-gray-900 dark:text-gray-100">{profileData.email}</p>
+                        )}
                     </div>
                 </div>
 
@@ -292,6 +335,64 @@ export default function SettingsCard({
     };
 
     const renderSecurity = () => {
+        const [showPasswordForm, setShowPasswordForm] = useState(false);
+        const [passwordData, setPasswordData] = useState({
+            currentPassword: "",
+            newPassword: "",
+            confirmPassword: "",
+        });
+
+        const handlePasswordChange = async () => {
+            if (!passwordData.newPassword || !passwordData.confirmPassword) {
+                showToast("Please fill in all password fields", "error");
+                return;
+            }
+
+            if (passwordData.newPassword !== passwordData.confirmPassword) {
+                showToast("New passwords do not match", "error");
+                return;
+            }
+
+            if (passwordData.newPassword.length < 8) {
+                showToast("Password must be at least 8 characters long", "error");
+                return;
+            }
+
+            if (!user) {
+                showToast("You must be logged in to change your password", "error");
+                return;
+            }
+
+            try {
+                // Use our API endpoint which calls Stack Auth's REST API
+                const response = await fetch('/api/user/password', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        currentPassword: passwordData.currentPassword,
+                        newPassword: passwordData.newPassword,
+                    }),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                    throw new Error(errorData.error || 'Failed to change password');
+                }
+
+                showToast("Password changed successfully", "success");
+                setShowPasswordForm(false);
+                setPasswordData({
+                    currentPassword: "",
+                    newPassword: "",
+                    confirmPassword: "",
+                });
+            } catch (error) {
+                console.error("Error changing password:", error);
+                const errorMessage = error instanceof Error ? error.message : "Unknown error";
+                showToast(`Failed to change password: ${errorMessage}`, "error");
+            }
+        };
+
         return (
             <div className="space-y-4">
                 <div>
@@ -299,13 +400,78 @@ export default function SettingsCard({
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                         Update your password to keep your account secure
                     </p>
-                    <button
-                        onClick={() => showToast("Password change requires authentication API", "info")}
-                        className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
-                        <Lock size={16} />
-                        Change Password
-                    </button>
+                    
+                    {!showPasswordForm ? (
+                        <button
+                            onClick={() => setShowPasswordForm(true)}
+                            className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        >
+                            <Lock size={16} />
+                            Change Password
+                        </button>
+                    ) : (
+                        <div className="space-y-3 p-4 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Current Password
+                                </label>
+                                <input
+                                    type="password"
+                                    value={passwordData.currentPassword}
+                                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                                    placeholder="Enter current password"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    New Password
+                                </label>
+                                <input
+                                    type="password"
+                                    value={passwordData.newPassword}
+                                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                                    placeholder="Enter new password (min 8 characters)"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Confirm New Password
+                                </label>
+                                <input
+                                    type="password"
+                                    value={passwordData.confirmPassword}
+                                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                                    placeholder="Confirm new password"
+                                />
+                            </div>
+                            <div className="flex gap-2 pt-2">
+                                <button
+                                    onClick={handlePasswordChange}
+                                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                >
+                                    <Save size={16} />
+                                    Change Password
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setShowPasswordForm(false);
+                                        setPasswordData({
+                                            currentPassword: "",
+                                            newPassword: "",
+                                            confirmPassword: "",
+                                        });
+                                    }}
+                                    className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                >
+                                    <X size={16} />
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div>
