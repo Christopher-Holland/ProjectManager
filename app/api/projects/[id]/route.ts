@@ -1,15 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateWeightedSchedule } from "@/app/components/features/timeline/timeline-generator";
+import { updateProjectSchema, validateRequest, idParamSchema, validateParams } from "@/lib/validation";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const paramsResult = await params;
+    
+    // Validate route parameters
+    const paramValidation = validateParams(idParamSchema, paramsResult);
+    if (!paramValidation.success) {
+      return paramValidation.response;
+    }
+    const { id } = paramValidation.data;
+    
     const body = await request.json();
-    const { status, title, description, priority, dueDate, release } = body;
+    
+    // Validate request body
+    const validation = validateRequest(updateProjectSchema, body);
+    if (!validation.success) {
+      return validation.response;
+    }
+    
+    const { status, title, description, priority, dueDate } = validation.data;
 
     const updateData: { 
       status?: string; 
@@ -117,7 +133,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const paramsResult = await params;
+    
+    // Validate route parameters
+    const paramValidation = validateParams(idParamSchema, paramsResult);
+    if (!paramValidation.success) {
+      return paramValidation.response;
+    }
+    const { id } = paramValidation.data;
 
     await prisma.project.delete({
       where: { id },

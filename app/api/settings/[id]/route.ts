@@ -2,20 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { stackServerApp } from "@/stack/server";
+import { updateSettingSchema, validateRequest, idParamSchema, validateParams } from "@/lib/validation";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  let updateData: {
-    key?: string;
-    value?: string;
-    category?: string | null;
-    description?: string | null;
-  } = {};
-
   try {
-    const { id } = await params;
+    const paramsResult = await params;
+    
+    // Validate route parameters
+    const paramValidation = validateParams(idParamSchema, paramsResult);
+    if (!paramValidation.success) {
+      return paramValidation.response;
+    }
+    const { id } = paramValidation.data;
+    
     const cookieStore = await cookies();
     const user = await stackServerApp.getUser(cookieStore);
     
@@ -27,7 +29,21 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { key, value, category, description } = body;
+    
+    // Validate request body
+    const validation = validateRequest(updateSettingSchema, body);
+    if (!validation.success) {
+      return validation.response;
+    }
+    
+    const { key, value, category, description } = validation.data;
+    
+    const updateData: {
+      key?: string;
+      value?: string;
+      category?: string | null;
+      description?: string | null;
+    } = {};
 
     // Check if setting exists and belongs to user
     const existingSetting = await prisma.setting.findUnique({
@@ -90,9 +106,6 @@ export async function PATCH(
   } catch (error) {
     console.error("Error updating setting:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorStack = error instanceof Error ? error.stack : undefined;
-    console.error("Error stack:", errorStack);
-    console.error("Update data attempted:", updateData);
     return NextResponse.json(
       { error: "Failed to update setting", details: errorMessage },
       { status: 500 }
@@ -105,7 +118,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const paramsResult = await params;
+    
+    // Validate route parameters
+    const paramValidation = validateParams(idParamSchema, paramsResult);
+    if (!paramValidation.success) {
+      return paramValidation.response;
+    }
+    const { id } = paramValidation.data;
     const cookieStore = await cookies();
     const user = await stackServerApp.getUser(cookieStore);
     

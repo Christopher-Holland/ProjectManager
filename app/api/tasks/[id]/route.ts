@@ -1,14 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { updateTaskSchema, validateRequest, idParamSchema, validateParams } from "@/lib/validation";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const paramsResult = await params;
+    
+    // Validate route parameters
+    const paramValidation = validateParams(idParamSchema, paramsResult);
+    if (!paramValidation.success) {
+      return paramValidation.response;
+    }
+    const { id } = paramValidation.data;
+    
     const body = await request.json();
-    const { completed, title, description, status, priority } = body;
+    
+    // Validate request body
+    const validation = validateRequest(updateTaskSchema, body);
+    if (!validation.success) {
+      return validation.response;
+    }
+    
+    const { completed, title, description, status, priority } = validation.data;
 
     const updateData: { 
       completed?: boolean;
@@ -19,15 +35,7 @@ export async function PATCH(
     } = {};
 
     if (completed !== undefined) updateData.completed = completed;
-    if (title !== undefined && title !== null) {
-      if (typeof title === 'string' && title.trim() === '') {
-        return NextResponse.json(
-          { error: "Title cannot be empty" },
-          { status: 400 }
-        );
-      }
-      updateData.title = title;
-    }
+    if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description || null;
     if (status !== undefined) updateData.status = status;
     if (priority !== undefined) updateData.priority = priority;
@@ -158,7 +166,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const paramsResult = await params;
+    
+    // Validate route parameters
+    const paramValidation = validateParams(idParamSchema, paramsResult);
+    if (!paramValidation.success) {
+      return paramValidation.response;
+    }
+    const { id } = paramValidation.data;
 
     // Delete the task (subtasks will be deleted automatically due to cascade)
     await prisma.task.delete({

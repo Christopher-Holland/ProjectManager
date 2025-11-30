@@ -1,13 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateWeightedSchedule } from "@/app/components/features/timeline/timeline-generator";
+import { idParamSchema, validateParams } from "@/lib/validation";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: projectId } = await params;
+    const paramsResult = await params;
+    
+    // Validate route parameters
+    const paramValidation = validateParams(idParamSchema, paramsResult);
+    if (!paramValidation.success) {
+      return paramValidation.response;
+    }
+    const { id: projectId } = paramValidation.data;
 
     // Get the project with its due date
     const project = await prisma.project.findUnique({

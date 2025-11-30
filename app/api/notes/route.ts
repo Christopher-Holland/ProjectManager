@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { stackServerApp } from "@/stack/server";
+import { createNoteSchema, validateRequest } from "@/lib/validation";
 
 export async function GET() {
   try {
@@ -60,14 +61,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, content, tags, pinned } = body;
-
-    if (!title) {
-      return NextResponse.json(
-        { error: "Title is required" },
-        { status: 400 }
-      );
+    
+    // Validate request body
+    const validation = validateRequest(createNoteSchema, body);
+    if (!validation.success) {
+      return validation.response;
     }
+    
+    const { title, content, tags, pinned } = validation.data;
 
     const newNote = await prisma.note.create({
       data: {

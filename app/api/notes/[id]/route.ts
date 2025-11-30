@@ -2,22 +2,38 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { stackServerApp } from "@/stack/server";
+import { updateNoteSchema, validateRequest, idParamSchema, validateParams } from "@/lib/validation";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  let updateData: {
-    title?: string;
-    content?: string | null;
-    tags?: string | null;
-    pinned?: boolean;
-  } = {};
-
   try {
-    const { id } = await params;
+    const paramsResult = await params;
+    
+    // Validate route parameters
+    const paramValidation = validateParams(idParamSchema, paramsResult);
+    if (!paramValidation.success) {
+      return paramValidation.response;
+    }
+    const { id } = paramValidation.data;
+    
     const body = await request.json();
-    const { title, content, tags, pinned } = body;
+    
+    // Validate request body
+    const validation = validateRequest(updateNoteSchema, body);
+    if (!validation.success) {
+      return validation.response;
+    }
+    
+    const { title, content, tags, pinned } = validation.data;
+    
+    const updateData: {
+      title?: string;
+      content?: string | null;
+      tags?: string | null;
+      pinned?: boolean;
+    } = {};
 
     if (title !== undefined) updateData.title = title;
     if (content !== undefined) updateData.content = content || null;
@@ -57,9 +73,6 @@ export async function PATCH(
   } catch (error) {
     console.error("Error updating note:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorStack = error instanceof Error ? error.stack : undefined;
-    console.error("Error stack:", errorStack);
-    console.error("Update data attempted:", updateData);
     return NextResponse.json(
       { error: "Failed to update note", details: errorMessage },
       { status: 500 }
@@ -72,7 +85,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const paramsResult = await params;
+    
+    // Validate route parameters
+    const paramValidation = validateParams(idParamSchema, paramsResult);
+    if (!paramValidation.success) {
+      return paramValidation.response;
+    }
+    const { id } = paramValidation.data;
 
     // Note: For now, allowing deletes to all notes (like projects API)
     // In production, you may want to add userID verification

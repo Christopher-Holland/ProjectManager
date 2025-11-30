@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { stackServerApp } from "@/stack/server";
+import { createSettingSchema, validateRequest } from "@/lib/validation";
 
 export async function GET() {
   try {
@@ -51,14 +52,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { key, value, category, description } = body;
-
-    if (!key || !value) {
-      return NextResponse.json(
-        { error: "Key and value are required" },
-        { status: 400 }
-      );
+    
+    // Validate request body
+    const validation = validateRequest(createSettingSchema, body);
+    if (!validation.success) {
+      return validation.response;
     }
+    
+    const { key, value, category, description } = validation.data;
 
     // Check if setting already exists for this user
     const existing = await prisma.setting.findUnique({

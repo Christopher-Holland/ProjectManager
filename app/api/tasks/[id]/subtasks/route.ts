@@ -1,22 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateWeightedSchedule } from "@/app/components/features/timeline/timeline-generator";
+import { idParamSchema, validateParams, createSubtaskSchema, validateRequest } from "@/lib/validation";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: taskId } = await params;
-    const body = await request.json();
-    const { title, description } = body;
-
-    if (!title) {
-      return NextResponse.json(
-        { error: "Title is required" },
-        { status: 400 }
-      );
+    const paramsResult = await params;
+    
+    // Validate route parameters
+    const paramValidation = validateParams(idParamSchema, paramsResult);
+    if (!paramValidation.success) {
+      return paramValidation.response;
     }
+    const { id: taskId } = paramValidation.data;
+    
+    const body = await request.json();
+    
+    // Validate request body
+    const validation = validateRequest(createSubtaskSchema, body);
+    if (!validation.success) {
+      return validation.response;
+    }
+    
+    const { title, description } = validation.data;
 
     // Get the task to get the projectId if not provided
     const task = await prisma.task.findUnique({

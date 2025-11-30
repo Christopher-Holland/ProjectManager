@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { stackServerApp } from "@/stack/server";
+import { createProjectSchema, validateRequest } from "@/lib/validation";
 
 export async function GET() {
   try {
@@ -49,14 +50,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, description, dueDate, priority, status } = body;
-
-    if (!title) {
-      return NextResponse.json(
-        { error: "Title is required" },
-        { status: 400 }
-      );
+    
+    // Validate request body
+    const validation = validateRequest(createProjectSchema, body);
+    if (!validation.success) {
+      return validation.response;
     }
+    
+    const { title, description, dueDate, priority, status } = validation.data;
 
     const newProject = await prisma.project.create({
       data: {

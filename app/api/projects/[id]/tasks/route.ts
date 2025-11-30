@@ -1,13 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateWeightedSchedule } from "@/app/components/features/timeline/timeline-generator";
+import { idParamSchema, validateParams, createTaskSchema, validateRequest } from "@/lib/validation";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const paramsResult = await params;
+    
+    // Validate route parameters
+    const paramValidation = validateParams(idParamSchema, paramsResult);
+    if (!paramValidation.success) {
+      return paramValidation.response;
+    }
+    const { id } = paramValidation.data;
 
     const tasks = await prisma.task.findMany({
       where: { projectID: id },
@@ -69,16 +77,24 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-    const body = await request.json();
-    const { title, description } = body;
-
-    if (!title) {
-      return NextResponse.json(
-        { error: "Title is required" },
-        { status: 400 }
-      );
+    const paramsResult = await params;
+    
+    // Validate route parameters
+    const paramValidation = validateParams(idParamSchema, paramsResult);
+    if (!paramValidation.success) {
+      return paramValidation.response;
     }
+    const { id } = paramValidation.data;
+    
+    const body = await request.json();
+    
+    // Validate request body
+    const validation = validateRequest(createTaskSchema, body);
+    if (!validation.success) {
+      return validation.response;
+    }
+    
+    const { title, description } = validation.data;
 
     // Create task without include to avoid transaction issues
     const newTask = await prisma.task.create({

@@ -1,15 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateWeightedSchedule } from "@/app/components/features/timeline/timeline-generator";
+import { updateSubtaskSchema, validateRequest, idParamSchema, validateParams } from "@/lib/validation";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const paramsResult = await params;
+    
+    // Validate route parameters
+    const paramValidation = validateParams(idParamSchema, paramsResult);
+    if (!paramValidation.success) {
+      return paramValidation.response;
+    }
+    const { id } = paramValidation.data;
+    
     const body = await request.json();
-    const { completed, title, description } = body;
+    
+    // Validate request body
+    const validation = validateRequest(updateSubtaskSchema, body);
+    if (!validation.success) {
+      return validation.response;
+    }
+    
+    const { completed, title, description } = validation.data;
 
     const updateData: {
       completed?: boolean;
@@ -41,7 +57,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const paramsResult = await params;
+    
+    // Validate route parameters
+    const paramValidation = validateParams(idParamSchema, paramsResult);
+    if (!paramValidation.success) {
+      return paramValidation.response;
+    }
+    const { id } = paramValidation.data;
 
     // Get subtask info before deletion to get projectID
     const subtask = await prisma.subTask.findUnique({

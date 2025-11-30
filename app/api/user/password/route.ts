@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { stackServerApp } from "@/stack/server";
+import { updatePasswordSchema, validateRequest } from "@/lib/validation";
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -15,21 +16,14 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { currentPassword, newPassword } = body;
-
-    if (!currentPassword || !newPassword) {
-      return NextResponse.json(
-        { error: "Current password and new password are required" },
-        { status: 400 }
-      );
+    
+    // Validate request body
+    const validation = validateRequest(updatePasswordSchema, body);
+    if (!validation.success) {
+      return validation.response;
     }
-
-    if (newPassword.length < 8) {
-      return NextResponse.json(
-        { error: "New password must be at least 8 characters long" },
-        { status: 400 }
-      );
-    }
+    
+    const { currentPassword, newPassword } = validation.data;
 
     // Stack Auth password updates use their REST API
     // We need to call Stack Auth's API directly with the API key
