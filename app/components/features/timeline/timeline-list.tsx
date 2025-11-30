@@ -51,14 +51,13 @@ export default function TimelineList() {
                     return end < now;
                 };
 
-                // Add projects with due dates (exclude completed and overdue)
+                // Add projects with due dates (exclude completed)
                 projects.forEach((project: any) => {
                     if (project.dueDate) {
                         const projectCompleted = project.status === "completed";
-                        const projectOverdue = isOverdue(project.dueDate);
                         
-                        // Skip if completed AND overdue
-                        if (!(projectCompleted && projectOverdue)) {
+                        // Skip if completed
+                        if (!projectCompleted) {
                             timelineItems.push({
                                 id: project.id,
                                 title: project.title,
@@ -72,14 +71,13 @@ export default function TimelineList() {
                     }
                 });
 
-                // Add tasks with due dates (exclude completed and overdue)
+                // Add tasks with due dates (exclude completed)
                 tasks.forEach((task: Task & { projectTitle?: string; projectID?: string; subtasks?: Array<{ id: string; title: string; dueDate?: Date | string; completed: boolean }> }) => {
                     if (task.dueDate) {
                         const taskCompleted = task.completed || task.status === "completed";
-                        const taskOverdue = isOverdue(task.dueDate);
                         
-                        // Skip if completed AND overdue
-                        if (!(taskCompleted && taskOverdue)) {
+                        // Skip if completed
+                        if (!taskCompleted) {
                             timelineItems.push({
                                 id: task.id,
                                 title: task.title,
@@ -93,15 +91,14 @@ export default function TimelineList() {
                         }
                     }
 
-                    // Add subtasks with due dates (exclude completed and overdue)
+                    // Add subtasks with due dates (exclude completed)
                     if (task.subtasks && Array.isArray(task.subtasks)) {
                         task.subtasks.forEach((subtask) => {
                             if (subtask.dueDate) {
                                 const subtaskCompleted = subtask.completed;
-                                const subtaskOverdue = isOverdue(subtask.dueDate);
                                 
-                                // Skip if completed AND overdue
-                                if (!(subtaskCompleted && subtaskOverdue)) {
+                                // Skip if completed
+                                if (!subtaskCompleted) {
                                     timelineItems.push({
                                         id: subtask.id,
                                         title: subtask.title,
