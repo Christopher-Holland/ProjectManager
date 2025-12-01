@@ -68,10 +68,10 @@ export async function PATCH(
 
         if (tasks.length > 0) {
           // Format tasks for the timeline generator
-          const formattedTasks = tasks.map((task) => ({
+          const formattedTasks = tasks.map((task: typeof tasks[0]) => ({
             id: task.id,
             title: task.title,
-            subtasks: task.subTasks.map((sub) => ({
+            subtasks: task.subTasks.map((sub: typeof task.subTasks[0]) => ({
               id: sub.id,
               title: sub.title,
             })),

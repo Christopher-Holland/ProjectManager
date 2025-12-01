@@ -29,8 +29,8 @@ export async function GET(request: NextRequest) {
     });
 
     // Create project map for all projects (including status)
-    const projectMap = new Map(allProjects.map((p) => [p.id, { title: p.title, status: p.status }]));
-    const allProjectIds = allProjects.map((p) => p.id);
+    const projectMap = new Map(allProjects.map((p: typeof allProjects[0]) => [p.id, { title: p.title, status: p.status }]));
+    const allProjectIds = allProjects.map((p: typeof allProjects[0]) => p.id);
 
     // If no projects, return empty array
     if (allProjectIds.length === 0) {
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
 
 
     // Get all task IDs to fetch subtasks
-    const taskIds = tasks.map((t) => t.id);
+    const taskIds = tasks.map((t: typeof tasks[0]) => t.id);
 
     // Fetch all subtasks separately
     const allSubtasks = taskIds.length > 0 ? await prisma.subTask.findMany({
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
     }, {} as Record<string, typeof allSubtasks>);
 
     // Transform to match Task type format
-    const formattedTasks = tasks.map((task) => {
+    const formattedTasks = tasks.map((task: typeof tasks[0]) => {
       const projectInfo = projectMap.get(task.projectID) || { title: "Unknown Project", status: "active" };
       return {
         id: task.id,
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
         projectID: task.projectID,
         projectTitle: projectInfo.title,
         projectStatus: projectInfo.status,
-      subtasks: (subtasksByTaskId[task.id] || []).map((sub) => ({
+      subtasks: (subtasksByTaskId[task.id] || []).map((sub: typeof allSubtasks[0]) => ({
         id: sub.id,
         title: sub.title,
         description: sub.description,

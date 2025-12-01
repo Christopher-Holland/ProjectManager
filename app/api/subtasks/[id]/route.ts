@@ -95,10 +95,10 @@ export async function DELETE(
 
           if (allTasks.length > 0) {
             // Format tasks for the timeline generator
-            const formattedTasks = allTasks.map((t) => ({
+            const formattedTasks = allTasks.map((t: typeof allTasks[0]) => ({
               id: t.id,
               title: t.title,
-              subtasks: t.subTasks.map((sub) => ({
+              subtasks: t.subTasks.map((sub: typeof t.subTasks[0]) => ({
                 id: sub.id,
                 title: sub.title,
               })),

@@ -82,7 +82,7 @@ export async function PATCH(
         dueDate: existingTask.dueDate,
         projectID: existingTask.projectID,
         projectTitle: project?.title || "",
-        subtasks: subtasks.map((sub) => ({
+        subtasks: subtasks.map((sub: typeof subtasks[0]) => ({
           id: sub.id,
           title: sub.title,
           description: sub.description,
@@ -130,7 +130,7 @@ export async function PATCH(
       dueDate: updatedTask.dueDate,
       projectID: updatedTask.projectID,
       projectTitle: project?.title || "",
-      subtasks: subtasks.map((sub) => ({
+      subtasks: subtasks.map((sub: typeof subtasks[0]) => ({
         id: sub.id,
         title: sub.title,
         description: sub.description,

@@ -49,12 +49,12 @@ export async function GET(
     }, {} as Record<string, typeof allSubtasks>);
 
     // Transform to match TaskModal format
-    const formattedTasks = tasks.map((task) => ({
+    const formattedTasks = tasks.map((task: typeof tasks[0]) => ({
       id: task.id,
       title: task.title,
       description: task.description,
       completed: task.completed,
-      subtasks: (subtasksByTaskId[task.id] || []).map((sub) => ({
+      subtasks: (subtasksByTaskId[task.id] || []).map((sub: typeof allSubtasks[0]) => ({
         id: sub.id,
         title: sub.title,
         description: sub.description,
@@ -126,10 +126,10 @@ export async function POST(
 
         if (allTasks.length > 0) {
           // Format tasks for the timeline generator
-          const formattedTasks = allTasks.map((task) => ({
+          const formattedTasks = allTasks.map((task: typeof allTasks[0]) => ({
             id: task.id,
             title: task.title,
-            subtasks: task.subTasks.map((sub) => ({
+            subtasks: task.subTasks.map((sub: typeof task.subTasks[0]) => ({
               id: sub.id,
               title: sub.title,
             })),
@@ -201,7 +201,7 @@ export async function POST(
       description: updatedTask!.description,
       completed: updatedTask!.completed,
       dueDate: updatedTask!.dueDate,
-      subtasks: subtasks.map((sub) => ({
+      subtasks: subtasks.map((sub: typeof subtasks[0]) => ({
         id: sub.id,
         title: sub.title,
         description: sub.description,
