@@ -26,7 +26,7 @@ export async function GET(
     });
 
     // Fetch subtasks separately for all tasks to avoid transaction issues
-    const taskIds = tasks.map(t => t.id);
+    const taskIds = tasks.map((t: typeof tasks[0]) => t.id);
     const allSubtasks = taskIds.length > 0 ? await prisma.subTask.findMany({
       where: { taskID: { in: taskIds } },
       select: {
