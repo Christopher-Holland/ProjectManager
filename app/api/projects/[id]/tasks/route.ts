@@ -40,7 +40,7 @@ export async function GET(
     }) : [];
 
     // Group subtasks by taskID
-    const subtasksByTaskId = allSubtasks.reduce((acc, sub) => {
+    const subtasksByTaskId = allSubtasks.reduce((acc: Record<string, typeof allSubtasks>, sub: typeof allSubtasks[0]) => {
       if (!acc[sub.taskID!]) {
         acc[sub.taskID!] = [];
       }

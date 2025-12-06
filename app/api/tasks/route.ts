@@ -29,7 +29,9 @@ export async function GET(request: NextRequest) {
     });
 
     // Create project map for all projects (including status)
-    const projectMap = new Map(allProjects.map((p: typeof allProjects[0]) => [p.id, { title: p.title, status: p.status }]));
+    const projectMap = new Map<string, { title: string; status: string }>(
+      allProjects.map((p: typeof allProjects[0]) => [p.id, { title: p.title, status: p.status }])
+    );
     const allProjectIds = allProjects.map((p: typeof allProjects[0]) => p.id);
 
     // If no projects, return empty array
@@ -71,7 +73,7 @@ export async function GET(request: NextRequest) {
     }) : [];
 
     // Group subtasks by taskID
-    const subtasksByTaskId = allSubtasks.reduce((acc, sub) => {
+    const subtasksByTaskId = allSubtasks.reduce((acc: Record<string, typeof allSubtasks>, sub: typeof allSubtasks[0]) => {
       if (!acc[sub.taskID!]) {
         acc[sub.taskID!] = [];
       }
@@ -81,7 +83,7 @@ export async function GET(request: NextRequest) {
 
     // Transform to match Task type format
     const formattedTasks = tasks.map((task: typeof tasks[0]) => {
-      const projectInfo = projectMap.get(task.projectID) || { title: "Unknown Project", status: "active" };
+      const projectInfo = projectMap.get(task.projectID) ?? { title: "Unknown Project", status: "active" };
       return {
         id: task.id,
         title: task.title,
