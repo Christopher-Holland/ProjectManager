@@ -11,4 +11,38 @@ body {
   @apply bg-white dark:bg-gray-900;
 }
 
+/* Stack Auth SignIn component text color customization */
+/* Target all text within the sign-in wrapper */
+.stack-signin-wrapper {
+  color: #1f2937; /* Light mode text color - change to your desired color */
+}
+
+.stack-signin-wrapper * {
+  color: inherit; /* Inherit from parent, or set specific colors below */
+}
+
+/* Dark mode text colors */
+.dark .stack-signin-wrapper {
+  color: #f3f4f6; /* Dark mode text color - change to your desired color */
+}
+
+/* More specific targeting (if needed) */
+.stack-signin-wrapper h1,
+.stack-signin-wrapper h2,
+.stack-signin-wrapper h3,
+.stack-signin-wrapper p,
+.stack-signin-wrapper label,
+.stack-signin-wrapper span {
+  color: #1f2937; /* Light mode - adjust as needed */
+}
+
+.dark .stack-signin-wrapper h1,
+.dark .stack-signin-wrapper h2,
+.dark .stack-signin-wrapper h3,
+.dark .stack-signin-wrapper p,
+.dark .stack-signin-wrapper label,
+.dark .stack-signin-wrapper span {
+  color: #f3f4f6; /* Dark mode - adjust as needed */
+}
+
 
