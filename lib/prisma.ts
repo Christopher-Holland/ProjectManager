@@ -1,4 +1,3 @@
-// @ts-ignore - Prisma client is generated and available at runtime
 import { PrismaClient } from "@prisma/client";
 import { PrismaNeonHttp } from "@prisma/adapter-neon";
 
