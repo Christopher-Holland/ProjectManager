@@ -12,37 +12,190 @@ body {
 }
 
 /* Stack Auth SignIn component text color customization */
-/* Target all text within the sign-in wrapper */
-.stack-signin-wrapper {
-  color: #1f2937; /* Light mode text color - change to your desired color */
-}
+/* Comprehensive styling to ensure all text is visible in both light and dark modes */
 
+/* Light mode - default text colors */
+.stack-signin-wrapper,
 .stack-signin-wrapper * {
-  color: inherit; /* Inherit from parent, or set specific colors below */
+  color: #1f2937 !important; /* Gray-800 for light mode */
 }
 
-/* Dark mode text colors */
-.dark .stack-signin-wrapper {
-  color: #f3f4f6; /* Dark mode text color - change to your desired color */
-}
-
-/* More specific targeting (if needed) */
+/* Specific elements in light mode */
 .stack-signin-wrapper h1,
 .stack-signin-wrapper h2,
 .stack-signin-wrapper h3,
+.stack-signin-wrapper h4,
+.stack-signin-wrapper h5,
+.stack-signin-wrapper h6,
 .stack-signin-wrapper p,
 .stack-signin-wrapper label,
-.stack-signin-wrapper span {
-  color: #1f2937; /* Light mode - adjust as needed */
+.stack-signin-wrapper span,
+.stack-signin-wrapper div,
+.stack-signin-wrapper a,
+.stack-signin-wrapper button,
+.stack-signin-wrapper input::placeholder,
+.stack-signin-wrapper textarea::placeholder {
+  color: #1f2937 !important; /* Gray-800 for light mode */
+}
+
+/* Dark mode - all text elements */
+.dark .stack-signin-wrapper,
+.dark .stack-signin-wrapper * {
+  color: #f3f4f6 !important; /* Gray-100 for dark mode */
 }
 
 .dark .stack-signin-wrapper h1,
 .dark .stack-signin-wrapper h2,
 .dark .stack-signin-wrapper h3,
+.dark .stack-signin-wrapper h4,
+.dark .stack-signin-wrapper h5,
+.dark .stack-signin-wrapper h6,
 .dark .stack-signin-wrapper p,
 .dark .stack-signin-wrapper label,
-.dark .stack-signin-wrapper span {
-  color: #f3f4f6; /* Dark mode - adjust as needed */
+.dark .stack-signin-wrapper span,
+.dark .stack-signin-wrapper div,
+.dark .stack-signin-wrapper a,
+.dark .stack-signin-wrapper button,
+.dark .stack-signin-wrapper input::placeholder,
+.dark .stack-signin-wrapper textarea::placeholder,
+.dark .stack-signin-wrapper small,
+.dark .stack-signin-wrapper strong,
+.dark .stack-signin-wrapper em {
+  color: #f3f4f6 !important; /* Gray-100 for dark mode */
+}
+
+/* Input text colors */
+.stack-signin-wrapper input[type="text"],
+.stack-signin-wrapper input[type="email"],
+.stack-signin-wrapper input[type="password"],
+.stack-signin-wrapper textarea {
+  color: #1f2937 !important;
+}
+
+.dark .stack-signin-wrapper input[type="text"],
+.dark .stack-signin-wrapper input[type="email"],
+.dark .stack-signin-wrapper input[type="password"],
+.dark .stack-signin-wrapper textarea {
+  color: #f3f4f6 !important;
+}
+
+/* Links in dark mode should be slightly lighter for visibility */
+.dark .stack-signin-wrapper a {
+  color: #60a5fa !important; /* Light blue for better visibility */
+}
+
+.dark .stack-signin-wrapper a:hover {
+  color: #93c5fd !important; /* Lighter blue on hover */
+}
+
+/* Button text colors - default for buttons */
+.stack-signin-wrapper button,
+.stack-signin-wrapper button *,
+.stack-signin-wrapper button span,
+.stack-signin-wrapper button div,
+.stack-signin-wrapper button p,
+.stack-signin-wrapper button label,
+.stack-signin-wrapper [role="button"],
+.stack-signin-wrapper [role="button"] *,
+.stack-signin-wrapper [role="button"] span,
+.stack-signin-wrapper [role="button"] div,
+.stack-signin-wrapper a[role="button"],
+.stack-signin-wrapper a[role="button"] *,
+.stack-signin-wrapper button[type="button"],
+.stack-signin-wrapper button[type="button"] *,
+.stack-signin-wrapper button[type="submit"],
+.stack-signin-wrapper button[type="submit"] * {
+  color: #1f2937 !important; /* Default dark text for buttons */
+}
+
+/* Google button - has white/light background, needs dark text */
+/* Target by class added via JavaScript */
+.stack-signin-wrapper .stack-oauth-google,
+.stack-signin-wrapper .stack-oauth-google *,
+.stack-signin-wrapper .stack-oauth-google span,
+.stack-signin-wrapper .stack-oauth-google div,
+.stack-signin-wrapper .stack-oauth-google p {
+  color: #1f2937 !important; /* Dark text for Google button */
+}
+
+.dark .stack-signin-wrapper .stack-oauth-google,
+.dark .stack-signin-wrapper .stack-oauth-google *,
+.dark .stack-signin-wrapper .stack-oauth-google span,
+.dark .stack-signin-wrapper .stack-oauth-google div,
+.dark .stack-signin-wrapper .stack-oauth-google p {
+  color: #1f2937 !important; /* Dark text for Google button in dark mode */
+}
+
+/* GitHub button - has dark background, needs light text */
+.stack-signin-wrapper .stack-oauth-github,
+.stack-signin-wrapper .stack-oauth-github *,
+.stack-signin-wrapper .stack-oauth-github span,
+.stack-signin-wrapper .stack-oauth-github div,
+.stack-signin-wrapper .stack-oauth-github p {
+  color: #ffffff !important; /* Light text for GitHub button */
+}
+
+.dark .stack-signin-wrapper .stack-oauth-github,
+.dark .stack-signin-wrapper .stack-oauth-github *,
+.dark .stack-signin-wrapper .stack-oauth-github span,
+.dark .stack-signin-wrapper .stack-oauth-github div,
+.dark .stack-signin-wrapper .stack-oauth-github p {
+  color: #ffffff !important; /* Light text for GitHub button in dark mode */
+}
+
+/* Fallback: Target by data attributes or other Stack Auth attributes */
+.stack-signin-wrapper [data-provider="google"] button,
+.stack-signin-wrapper [data-provider="google"] button *,
+.stack-signin-wrapper button[data-provider="google"],
+.stack-signin-wrapper button[data-provider="google"] * {
+  color: #1f2937 !important;
+}
+
+.stack-signin-wrapper [data-provider="github"] button,
+.stack-signin-wrapper [data-provider="github"] button *,
+.stack-signin-wrapper button[data-provider="github"],
+.stack-signin-wrapper button[data-provider="github"] * {
+  color: #ffffff !important;
+}
+
+.dark .stack-signin-wrapper [data-provider="google"] button,
+.dark .stack-signin-wrapper [data-provider="google"] button *,
+.dark .stack-signin-wrapper button[data-provider="google"],
+.dark .stack-signin-wrapper button[data-provider="google"] * {
+  color: #1f2937 !important;
+}
+
+.dark .stack-signin-wrapper [data-provider="github"] button,
+.dark .stack-signin-wrapper [data-provider="github"] button *,
+.dark .stack-signin-wrapper button[data-provider="github"],
+.dark .stack-signin-wrapper button[data-provider="github"] * {
+  color: #ffffff !important;
+}
+
+/* Alternative approach: Target buttons by their background color or specific styling */
+/* If Stack Auth uses specific classes, we can target those */
+.stack-signin-wrapper button[style*="background-color: rgb(255"],
+.stack-signin-wrapper button[style*="background-color: #fff"],
+.stack-signin-wrapper button[style*="background: white"] {
+  color: #1f2937 !important; /* Dark text for light background buttons */
+}
+
+.stack-signin-wrapper button[style*="background-color: rgb(51"],
+.stack-signin-wrapper button[style*="background-color: #333"],
+.stack-signin-wrapper button[style*="background: #24292e"] {
+  color: #ffffff !important; /* Light text for dark background buttons */
+}
+
+.dark .stack-signin-wrapper button[style*="background-color: rgb(255"],
+.dark .stack-signin-wrapper button[style*="background-color: #fff"],
+.dark .stack-signin-wrapper button[style*="background: white"] {
+  color: #1f2937 !important;
+}
+
+.dark .stack-signin-wrapper button[style*="background-color: rgb(51"],
+.dark .stack-signin-wrapper button[style*="background-color: #333"],
+.dark .stack-signin-wrapper button[style*="background: #24292e"] {
+  color: #ffffff !important;
 }
 
 
